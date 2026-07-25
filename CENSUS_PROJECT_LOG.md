@@ -101,7 +101,10 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
   PeopleWatch); app header + <title> changed to "HealthCast", NOAA/NWS logos kept.
   Favicon added: `assets/healthcast_icon.svg` (navy rounded square, gold EKG pulse,
   blue broadcast arcs), linked via `<link rel="icon">` — **user-confirmed working +
-  looks good**. Server restarted on :8020. Folder + backups folder names unchanged.
+  looks good**. v14 county-highlight/Map-Layer styling **approved by Alex**.
+  **GIT INIT done**: local repo, root commit `0d12fcb` (27 files); .gitignore excludes
+  `.env` (API key) + `us-census-bureau-data-api-mcp/` (re-clonable). LOCAL ONLY — no
+  remote/push without Alex's OK. Server restarted on :8020.
 - **2026-07-19 (PAUSED — backup taken)** — v14 visual pass, then paused on Alex's cue.
   Changes since v13, **none visually confirmed by Alex** (my screenshot tooling failed):
   · Basemap switcher M/L/D (CARTO voyager / positron / dark_all), **Muted = default per Alex**
