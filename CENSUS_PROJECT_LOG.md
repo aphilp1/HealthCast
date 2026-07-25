@@ -97,6 +97,18 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
    demographic depth via MCP (age 65+, mobile homes — hazard-vulnerability relevant tables).
 
 ## Session log
+- **2026-07-25 (ask-box parser overhaul, `9b6249f`)** — Alex: "heat warnings and watches"
+  wrongly included Severe Thunderstorm Watch + Red Flag Warning; "lets get a lot smarter".
+  Root causes: (1) warnings/watches discarded as noise — parser had no LEVEL concept;
+  (2) hazard words substring-matched area descriptions — "W**heat**land County" ⊃ "heat".
+  Fix: hazard terms match EVENT NAME only; new LEVELS (warning/watch/advisory/statement/
+  emergency + plurals) OR together, AND with hazards; place tokens get their own path vs
+  event+areaDesc; plural normalization; bigger synonym set (severe/extreme/hail/lightning/
+  cold/freeze/tsunami/surge/ozone/…). Verified localhost + PUBLIC URL: query now = Extreme
+  Heat Warning + Extreme Heat Watch only (48.6M); 10-query battery passes ("heat advisories"
+  → Heat Advisory only; "all warnings" → warnings only; "wheatland county" still works as a
+  place; gibberish → honest no-match); console clean. GOTCHA: Pages CDN caches census.html
+  max-age=600 — after a push, test with ?bust= or wait 10 min; Alex may need Ctrl+Shift+R.
 - **2026-07-25 (RESUMED — renamed HealthCast)** — project renamed **HealthCast** (was
   PeopleWatch); app header + <title> changed to "HealthCast", NOAA/NWS logos kept.
   Favicon added: `assets/healthcast_icon.svg` (navy rounded square, gold EKG pulse,
