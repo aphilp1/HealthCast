@@ -103,8 +103,13 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
   blue broadcast arcs), linked via `<link rel="icon">` — **user-confirmed working +
   looks good**. v14 county-highlight/Map-Layer styling **approved by Alex**.
   **GIT INIT done**: local repo, root commit `0d12fcb` (27 files); .gitignore excludes
-  `.env` (API key) + `us-census-bureau-data-api-mcp/` (re-clonable). LOCAL ONLY — no
-  remote/push without Alex's OK. Server restarted on :8020.
+  `.env` (API key) + `us-census-bureau-data-api-mcp/` (re-clonable). Server restarted on :8020.
+  **PUBLISHED (Alex's call, "so anyone can see it")**: public repo
+  https://github.com/aphilp1/HealthCast + GitHub Pages LIVE at
+  **https://aphilp1.github.io/HealthCast/** (root index.html redirects to census.html;
+  .nojekyll added per StormWatch lesson). Verified on the public URL via in-page JS:
+  450 alerts / 114.4M headline / cards rendered / no console errors. Screenshot tooling
+  timed out (hidden-tab throttling — known limit), page state verified instead.
 - **2026-07-19 (PAUSED — backup taken)** — v14 visual pass, then paused on Alex's cue.
   Changes since v13, **none visually confirmed by Alex** (my screenshot tooling failed):
   · Basemap switcher M/L/D (CARTO voyager / positron / dark_all), **Muted = default per Alex**
