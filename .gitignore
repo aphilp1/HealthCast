@@ -1,0 +1,10 @@
+# Secrets — CENSUS_API_KEY lives here, never commit
+.env
+
+# Official Census Bureau MCP server — re-clonable from
+# github.com/uscensusbureau/us-census-bureau-data-api-mcp (has its own repo)
+us-census-bureau-data-api-mcp/
+
+# Python
+__pycache__/
+*.pyc

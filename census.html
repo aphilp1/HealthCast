@@ -1,0 +1,1411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HealthCast</title>
+<link rel="icon" type="image/svg+xml" href="assets/healthcast_icon.svg">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #151b24;
+    --panel2: #1e2733;
+    --panel3: #27303d;
+    --text: #f4f7fa;
+    --muted: #c3cedb;
+    --faint: #8fa0b3;
+    --accent: #4da3ff;
+    --gold: #ffd166;
+    --line: #313d4d;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg); color: var(--text);
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+  header {
+    background: linear-gradient(180deg, #1b2431, #131a24);
+    border-bottom: 2px solid var(--line);
+    padding: 12px 20px; display: flex; align-items: center; gap: 24px; flex-wrap: wrap;
+  }
+  .brand { flex: 1; min-width: 340px; display: flex; align-items: center; gap: 12px; }
+  .brand .logo { height: 44px; width: 44px; }
+  .brand h1 { font-size: 1.15rem; letter-spacing: .4px; line-height: 1.3; }
+  .stats { display: flex; gap: 30px; margin-left: auto; align-items: center; }
+  .stat { text-align: right; }
+  .stat .v { font-size: 1.55rem; font-weight: 700; color: var(--gold); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .stat .v.blue { color: var(--accent); }
+  .stat .l { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; }
+  #refresh {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 7px; padding: 8px 15px; cursor: pointer; font-size: .85rem;
+  }
+  #refresh:hover { border-color: var(--accent); background: var(--panel3); }
+  #layout { flex: 1; display: flex; min-height: 0; }
+  #sidebar {
+    width: 362px; min-width: 300px; background: var(--panel);
+    border-right: 2px solid var(--line); display: flex; flex-direction: column; min-height: 0;
+  }
+  #controls { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+  #search {
+    width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 7px;
+    color: var(--text); padding: 8px 12px; font-size: .86rem;
+  }
+  #search { padding-right: 30px; }
+  #search:focus { outline: none; border-color: var(--accent); }
+  #search::placeholder { color: var(--faint); }
+  #search-clear {
+    position: absolute; right: 7px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: var(--faint); padding: 2px 6px; display: none; font-size: .9rem;
+  }
+  #search-clear:hover { color: #fff; }
+  #reset-chip { margin-left: auto; }
+  #chips { display: flex; gap: 6px; margin-top: 9px; flex-wrap: wrap; }
+  .chip {
+    background: var(--panel2); border: 1px solid var(--line); color: var(--muted);
+    border-radius: 15px; padding: 4px 13px; font-size: .77rem; cursor: pointer; user-select: none;
+  }
+  .chip:hover { border-color: var(--accent); }
+  .chip.on { background: var(--accent); color: #08111d; border-color: var(--accent); font-weight: 600; }
+  #progress { color: var(--muted); font-size: .77rem; padding: 7px 13px; border-bottom: 1px solid var(--line); }
+  #answer {
+    background: linear-gradient(180deg, #23303f, #1d2836); border-bottom: 1px solid var(--accent);
+    padding: 10px 13px; font-size: .86rem; line-height: 1.45;
+  }
+  #answer .num { color: var(--gold); font-weight: 800; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+  #answer .sub { color: var(--muted); font-size: .74rem; margin-top: 2px; }
+  #alert-list { flex: 1; overflow-y: auto; padding: 9px; scrollbar-width: thin; scrollbar-color: var(--panel3) var(--panel); }
+  .alert-item {
+    background: var(--panel2); border: 1px solid var(--line); border-left-width: 6px;
+    border-radius: 9px; padding: 10px 12px; margin-bottom: 7px; cursor: pointer;
+    transition: transform .08s, border-color .08s;
+  }
+  .alert-item:hover { border-color: var(--accent); transform: translateX(2px); }
+  .alert-item.sel { outline: 2px solid var(--accent); background: var(--panel3); }
+  .ai-top { display: flex; align-items: baseline; gap: 8px; }
+  .ai-top .ev { font-weight: 700; font-size: .93rem; flex: 1; }
+  .ai-top .pop { font-size: 1rem; font-weight: 700; color: var(--gold); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ai-top .pop.na { color: var(--faint); font-weight: 400; font-size: .78rem; }
+  .alert-item .area { color: var(--muted); font-size: .78rem; margin-top: 3px; line-height: 1.35;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .gi-sub { color: var(--muted); font-size: .76rem; margin-top: 3px; }
+  .gi-expand { color: var(--accent); font-size: .74rem; margin-top: 5px; cursor: pointer; user-select: none; }
+  .gi-expand:hover { text-decoration: underline; }
+  .gi-members { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 4px; }
+  .gi-m {
+    display: flex; justify-content: space-between; gap: 8px; padding: 4px 6px; border-radius: 5px;
+    font-size: .76rem; color: var(--muted); cursor: pointer; align-items: baseline;
+  }
+  .gi-m:hover { background: var(--panel3); color: var(--text); }
+  .gi-m.sel { outline: 1px solid var(--accent); }
+  .gi-m .mp { color: var(--gold); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  #map { flex: 1; background: #0b0e12; position: relative; }
+  #layer-box {
+    position: absolute; left: 14px; bottom: 14px; z-index: 900; width: 232px;
+    background: rgba(19,25,34,.94); backdrop-filter: blur(6px);
+    border: 1px solid #3b4757; border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45); font-size: .78rem; user-select: none;
+    overflow: hidden;
+  }
+  #layer-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 12px 9px; cursor: grab; color: #e8eef5; font-weight: 700;
+    letter-spacing: .8px; font-size: .68rem; text-transform: uppercase;
+    background: rgba(255,255,255,.05); border-bottom: 1px solid #3b4757;
+  }
+  #layer-head:active { cursor: grabbing; }
+  #layer-head .lb-btns span {
+    cursor: pointer; padding: 1px 6px; color: #9fb0c2; font-size: 1rem; border-radius: 4px;
+  }
+  #layer-head .lb-btns span:hover { color: #fff; background: rgba(255,255,255,.12); }
+  #layer-body { padding: 11px 12px 13px; }
+  #layer-body select {
+    width: 100%; background: #1e2733; color: #f4f7fa; font-weight: 600;
+    border: 1px solid #46536580; border-radius: 8px; padding: 7px 9px; font-size: .82rem;
+    cursor: pointer;
+  }
+  #layer-body select:hover { border-color: var(--accent); }
+  #legend-body { margin-top: 11px; display: flex; flex-direction: column; gap: 1px; }
+  .lg-row {
+    display: flex; align-items: center; gap: 10px; padding: 3px 4px; border-radius: 5px;
+    color: #dbe4ee;
+  }
+  .lg-row:hover { background: rgba(255,255,255,.06); }
+  .lg-row i {
+    display: inline-block; width: 22px; height: 12px; border-radius: 3px; flex: 0 0 22px;
+    border: 1px solid rgba(255,255,255,.25);
+  }
+  .lg-row span { font-variant-numeric: tabular-nums; font-size: .76rem; }
+  #layer-open {
+    position: absolute; left: 14px; bottom: 14px; z-index: 900; background: var(--panel);
+    border: 1px solid var(--line); border-radius: 16px; padding: 7px 14px; cursor: pointer;
+    font-size: .78rem; color: var(--text); box-shadow: 0 3px 12px rgba(0,0,0,.5); display: none;
+  }
+  #layer-open:hover { border-color: var(--accent); }
+  #regions { position: absolute; left: 12px; top: 92px; z-index: 900; display: flex; flex-direction: column; gap: 4px; }
+  .rgn {
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted); border-radius: 6px;
+    padding: 4px 8px; font-size: .73rem; cursor: pointer; text-align: center; font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5); user-select: none;
+  }
+  .rgn:hover { border-color: var(--accent); color: var(--text); }
+  .rgn.on { background: var(--accent); color: #08111d; border-color: var(--accent); }
+  .rgn-sep { height: 6px; }
+  #expo {
+    position: absolute; right: 14px; top: 14px; z-index: 1000; width: 348px;
+    background: var(--panel); border: 2px solid var(--accent);
+    border-radius: 12px; display: none; box-shadow: 0 8px 26px rgba(0,0,0,.65); overflow: hidden;
+  }
+  #expo-head {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: grab;
+    font-weight: 700; font-size: .98rem; user-select: none; background: var(--panel2);
+  }
+  #expo-head:active { cursor: grabbing; }
+  #expo-head .close { cursor: pointer; color: var(--muted); font-size: 1.1rem; padding: 0 4px; }
+  #expo-head .close:hover { color: #fff; }
+  #expo-body {
+    padding: 12px 16px 14px; overflow-y: auto; max-height: calc(76vh - 46px); scrollbar-width: thin;
+    scrollbar-color: var(--panel3) var(--panel);
+  }
+  #expo .big { font-size: 2.1rem; font-weight: 800; color: var(--gold); margin: 2px 0 0; font-variant-numeric: tabular-nums; }
+  #expo .biglabel { font-size: .8rem; color: var(--muted); margin-bottom: 8px; }
+  #expo .method { color: var(--faint); font-size: .73rem; margin: 8px 0 2px; line-height: 1.4; }
+  #expo .sect { color: var(--accent); font-size: .72rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; margin: 10px 0 3px; }
+  .more-link { color: var(--accent); cursor: pointer; font-size: .78rem; }
+  .ca { background: var(--panel2); border: 1px solid var(--line); border-left-width: 5px;
+    border-radius: 8px; padding: 8px 10px; margin: 6px 0; }
+  .ca-head { cursor: pointer; }
+  .ca-ev { font-weight: 700; font-size: .88rem; }
+  .ca-time { color: var(--muted); font-size: .74rem; margin-top: 2px; }
+  .ca-headline { color: var(--muted); font-size: .78rem; margin-top: 3px; line-height: 1.35; }
+  .ca-toggle { color: var(--accent); font-size: .74rem; margin-top: 4px; }
+  .ca-desc { display: none; white-space: pre-wrap; color: var(--text); font-size: .76rem;
+    line-height: 1.45; margin-top: 7px; border-top: 1px solid var(--line); padding-top: 7px;
+    max-height: 300px; overflow-y: auto; scrollbar-width: thin; }
+  .more-link:hover { text-decoration: underline; }
+  #demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin: 4px 0 10px; }
+  .demo-cell { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 7px 9px; }
+  .demo-cell .dv { font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .demo-cell .dl { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .4px; margin-top: 1px; }
+  #expo table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+  #expo th { color: var(--muted); font-weight: 600; font-size: .72rem; text-transform: uppercase; letter-spacing: .3px; }
+  #expo th, #expo td { text-align: left; padding: 4px; border-bottom: 1px solid var(--line); }
+  #expo td.n, #expo th.n { text-align: right; font-variant-numeric: tabular-nums; }
+  #expo .close { position: absolute; right: 12px; top: 10px; cursor: pointer; color: var(--muted); font-size: 1.15rem; padding: 2px 6px; }
+  #expo .close:hover { color: #fff; }
+  .map-ctl {
+    background: var(--panel); color: var(--text); padding: 10px 12px; border-radius: 9px;
+    border: 1px solid var(--line); font-size: .76rem; line-height: 1.55; box-shadow: 0 3px 12px rgba(0,0,0,.5);
+  }
+  .map-ctl b { font-size: .72rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); }
+  .map-ctl select {
+    display: block; margin-top: 5px; width: 100%; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--line); border-radius: 6px; padding: 5px 7px; font-size: .8rem;
+  }
+  .legend i { display: inline-block; width: 15px; height: 12px; margin-right: 6px; vertical-align: -1px; border-radius: 2px; }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--panel); color: var(--text); }
+  .leaflet-popup-content { margin: 12px 14px; }
+  .leaflet-popup-content b { color: var(--accent); }
+  .cpu-row { display: flex; justify-content: space-between; gap: 16px; font-size: .8rem; padding: 1px 0; }
+  .cpu-row span:last-child { font-weight: 600; font-variant-numeric: tabular-nums; }
+  .leaflet-tooltip.county-tip {
+    background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+    font-size: .78rem; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  }
+  #loading {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    background: rgba(13,17,23,.9); z-index: 2000; font-size: 1rem; color: var(--text);
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <img src="assets/noaa_logo.svg" alt="NOAA" class="logo">
+    <img src="assets/nws_logo.svg" alt="National Weather Service" class="logo">
+    <h1>HealthCast</h1>
+  </div>
+  <div class="stats">
+    <div class="stat"><div class="v blue" id="st-alerts">–</div><div class="l">Active alerts</div></div>
+    <div class="stat"><div class="v" id="st-people">–</div><div class="l">People under ≥1 alert</div></div>
+    <button id="refresh" onclick="loadAlerts()">↻ Refresh</button>
+  </div>
+</header>
+<div id="layout">
+  <div id="sidebar">
+    <div id="controls">
+      <div style="position:relative">
+        <input id="search" placeholder="Ask: How many people are at risk for air quality?">
+        <span id="search-clear" title="Clear question">✕</span>
+      </div>
+      <div id="chips">
+        <span class="chip on" data-f="all">All</span>
+        <span class="chip" data-f="extreme">Extreme/Severe</span>
+        <span class="chip" data-f="warning">Warnings</span>
+        <span class="chip" data-f="people">Has population</span>
+        <span class="chip" id="reset-chip" title="Clear question, filters, selection and re-center map">⟲ Reset</span>
+      </div>
+    </div>
+    <div id="answer" style="display:none"></div>
+    <div id="progress">Loading…</div>
+    <div id="alert-list"></div>
+  </div>
+  <div id="map"></div>
+</div>
+<div id="expo">
+  <div id="expo-head"><span id="expo-title"></span><span class="close" id="expo-close" title="Close">✕</span></div>
+  <div id="expo-body"></div>
+</div>
+<div id="loading">Loading Census data…</div>
+
+<script>
+'use strict';
+const fmt = n => n.toLocaleString('en-US');
+const fmtShort = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(Math.round(n));
+
+const map = L.map('map', { preferCanvas: true, minZoom: 3 }).setView([39.5, -96.5], 5);
+const BASEMAPS = {
+  muted: { label: 'Muted', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
+  light: { label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' },
+  dark:  { label: 'Dark',  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
+};
+let baseKey = 'muted', baseLayer = null;
+function setBasemap(key) {
+  baseKey = key;
+  if (baseLayer) map.removeLayer(baseLayer);
+  baseLayer = L.tileLayer(BASEMAPS[key].url, {
+    attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
+  }).addTo(baseLayer ? map : map);
+  baseLayer.setZIndex(1);
+  document.querySelectorAll('.bm').forEach(b => b.classList.toggle('on', b.dataset.bm === key));
+  try { if (countyLayer) restyleCounties(); } catch (e) { /* countyLayer not declared yet on first call */ }
+}
+setBasemap('muted');
+
+// Separate panes so selecting an alert can dim everything else (focus mode)
+map.createPane('p-counties').style.zIndex = 350;
+map.createPane('p-coverage').style.zIndex = 400;
+map.getPane('p-coverage').style.pointerEvents = 'none';
+map.createPane('p-alerts').style.zIndex = 420;
+map.createPane('p-selection').style.zIndex = 450;
+// Selection highlight is display-only: clicks must pass through to counties/alerts
+map.getPane('p-selection').style.pointerEvents = 'none';
+for (const p of ['p-counties', 'p-coverage', 'p-alerts']) map.getPane(p).style.transition = 'opacity .25s';
+const countiesRenderer = L.canvas({ pane: 'p-counties' });
+// Alerts must be SVG: a canvas on top would swallow clicks meant for the
+// county layer beneath it — SVG only captures clicks on the shapes themselves
+const alertsRenderer = L.svg({ pane: 'p-alerts' });
+function setFocus(on) {
+  map.getPane('p-counties').style.opacity = on ? 0.35 : 1;
+  map.getPane('p-coverage').style.opacity = on ? 0.08 : 1;
+  map.getPane('p-alerts').style.opacity = on ? 0.12 : 1;
+}
+
+// ---- Choropleth modes (sequential single-hue ramps, low→high = dark→light) --
+const SEV_FILL = { 0: '#ff2d55', 1: '#ff8c00', 2: '#ffd166', 3: '#4d86c9', 4: '#7e8b99' };
+const SEV_NAME = { 0: 'Extreme', 1: 'Severe', 2: 'Moderate', 3: 'Minor', 4: 'Other' };
+let coverageWorst = {};
+const MODES = {
+  alerts: { label: 'Active alerts (by severity)',
+            fmt: v => SEV_NAME[v] + ' alert',
+            val: p => { const r = coverageWorst[p.GEOID]; return r === undefined ? null : r; } },
+  pop:    { label: 'Total population', fmt: fmtShort,
+            val: (p, a) => p.POP2023 ?? (a && a.pop),
+            ramp: ['#122b45', '#16436e', '#1b5e9b', '#2b7cc4', '#4da3ff', '#8ec8ff', '#d0e8ff'] },
+  age65:  { label: '% age 65 and over', fmt: v => v.toFixed(0) + '%',
+            val: (p, a) => a && a.age65 != null && a.pop ? 100 * a.age65 / a.pop : null,
+            ramp: ['#241b3a', '#3a2b5e', '#544087', '#7157b3', '#9377d9', '#bba3ef', '#e6dcfb'] },
+  income: { label: 'Median household income', fmt: v => '$' + fmtShort(v),
+            val: (p, a) => a && a.income,
+            ramp: ['#0e2a25', '#12463c', '#1a6e5a', '#2b9377', '#4db996', '#8adbb8', '#d2f5e3'] },
+  mobile: { label: 'Mobile homes (units)', fmt: fmtShort,
+            val: (p, a) => a && a.mobile,
+            ramp: ['#33200e', '#5a3a14', '#84571c', '#b07726', '#d99b3a', '#f0c079', '#ffe9c4'] },
+  pov:    { label: '% below poverty', fmt: v => v.toFixed(0) + '%',
+            val: (p, a) => a && a.pov_pct,
+            ramp: ['#330f14', '#5c1a22', '#8a2833', '#b53a45', '#dd5a63', '#f28f95', '#ffd6d8'] },
+  medage: { label: 'Median age', fmt: v => v.toFixed(0) + ' yrs',
+            val: (p, a) => a && a.medage,
+            ramp: ['#0d2b33', '#12454f', '#1a6b78', '#2b91a0', '#4db6c6', '#8ad4de', '#d2f1f5'] },
+  noveh:  { label: '% households, no vehicle', fmt: v => v.toFixed(0) + '%',
+            val: (p, a) => a && a.noveh,
+            ramp: ['#331022', '#5c1d3c', '#8a2e58', '#b54578', '#dd6a9c', '#f29dc0', '#ffd9ea'] },
+  diab:   { label: '% adults with diabetes', fmt: v => v.toFixed(0) + '%',
+            val: (p, a, h) => h && h.diab,
+            ramp: ['#33290e', '#5a4914', '#846c1c', '#b09326', '#d9b83a', '#f0d679', '#fff2c4'] },
+  copd:   { label: '% adults with COPD', fmt: v => v.toFixed(0) + '%',
+            val: (p, a, h) => h && h.copd,
+            ramp: ['#1c2430', '#2a3a4e', '#3b526d', '#4f6d8e', '#6b8cab', '#9ab4cc', '#d3e2ef'] },
+  chd:    { label: '% adults, coronary heart disease', fmt: v => v.toFixed(0) + '%',
+            val: (p, a, h) => h && h.chd,
+            ramp: ['#330f1c', '#5c1a30', '#8a2848', '#b53a62', '#dd5a83', '#f28fab', '#ffd6e2'] },
+};
+let mode = 'alerts', breaks = [];
+
+function computeBreaks() {
+  const m = MODES[mode];
+  const vals = [];
+  for (const f of countiesGJ.features) {
+    const v = m.val(f.properties, acs[f.properties.GEOID], health[f.properties.GEOID]);
+    if (v != null) vals.push(v);
+  }
+  vals.sort((a, b) => a - b);
+  breaks = [];
+  for (let i = 1; i < 7; i++) breaks.push(vals[Math.floor(vals.length * i / 7)]);
+}
+function modeColor(v) {
+  const ramp = MODES[mode].ramp;
+  if (v == null) return '#1a2026';
+  for (let i = breaks.length - 1; i >= 0; i--) if (v >= breaks[i]) return ramp[i + 1];
+  return ramp[0];
+}
+function restyleCounties() {
+  if (mode === 'alerts') {
+    countyLayer.setStyle(f => {
+      const r = coverageWorst[f.properties.GEOID];
+      const edge = baseKey === 'dark' ? '#0b0e12' : '#6b7787';
+      return r === undefined
+        ? { fillColor: '#94a3b3', fillOpacity: 0.06, color: edge, weight: 0.4 }
+        : { fillColor: SEV_FILL[r], fillOpacity: 0.62, color: edge, weight: 0.4 };
+    });
+  } else {
+    computeBreaks();
+    const edge = baseKey === 'dark' ? '#0b0e12' : '#6b7787';
+    countyLayer.setStyle(f => ({
+      fillColor: modeColor(MODES[mode].val(f.properties, acs[f.properties.GEOID], health[f.properties.GEOID])),
+      fillOpacity: 0.66, color: edge, weight: 0.4
+    }));
+  }
+  renderCoverage();
+  updateLegend();
+}
+
+// ---- Data loads -----------------------------------------------------------
+let countiesGJ = null, countyLayer = null, countyIndex = [], countyBounds = {}, countyFeat = {};
+let countyPop = null, bg = null, acs = {}, tr = null, health = {};
+let selLayer = null;
+
+fetch('data/tract_demo.json?v=' + Date.now()).then(r => r.json()).then(j => { tr = j; }).catch(() => {});
+
+Promise.all([
+  fetch('data/counties.geojson?v=' + Date.now()).then(r => { if (!r.ok) throw new Error('counties HTTP ' + r.status); return r.json(); }),
+  fetch('data/county_pop.json?v=' + Date.now()).then(r => r.json()),
+  fetch('data/bg_centroids.json?v=' + Date.now()).then(r => r.json()),
+  fetch('data/county_acs.json?v=' + Date.now()).then(r => r.json()),
+  fetch('data/county_health.json?v=' + Date.now()).then(r => r.json())
+]).then(([gj, cp, bgj, acsj, hj]) => {
+  countiesGJ = gj; countyPop = cp; bg = bgj; acs = acsj; health = hj;
+  buildBgIndex();
+  for (const f of gj.features) {
+    if (f.properties.POP2023 != null || acs[f.properties.GEOID]) countyIndex.push({ f, bbox: turf.bbox(f) });
+  }
+  countyLayer = L.geoJSON(gj, {
+    pane: 'p-counties', renderer: countiesRenderer,
+    style: () => ({ fillColor: '#1a2026', fillOpacity: 0.7, color: '#0b0e12', weight: 0.4 }),
+    onEachFeature: (f, lyr) => {
+      const p = f.properties;
+      countyFeat[p.GEOID] = f;
+      countyBounds[p.GEOID] = lyr.getBounds ? lyr.getBounds() : null;
+      lyr.on('mouseover', () => lyr.setStyle({ weight: 1.6, color: '#4da3ff' }));
+      lyr.on('mouseout', () => lyr.setStyle({ weight: 0.4, color: '#0b0e12' }));
+      lyr.bindTooltip(() => {
+        const a = acs[p.GEOID], m = MODES[mode], v = m.val(p, a, health[p.GEOID]);
+        return `<b>${countyName(p.GEOID, p)}</b><br>${m.label}: ${v != null ? m.fmt(v) : 'n/a'}`;
+      }, { sticky: true, className: 'county-tip' });
+      lyr.on('click', () => showCountyPanel(p.GEOID));
+    }
+  }).addTo(map);
+  restyleCounties();
+  document.getElementById('loading').style.display = 'none';
+  loadAlerts();
+}).catch(e => {
+  document.getElementById('loading').innerHTML =
+    'Could not load Census data (' + e.message + ').<br>Serve this folder over HTTP: ' +
+    '<code>python -m http.server 8020</code> then open <code>http://localhost:8020/census.html</code>';
+});
+
+function countyName(geoid, p) {
+  const rec = countyPop[geoid];
+  return rec ? rec[0] + ', ' + rec[1].replace(' (2020 Census)', '') : (p ? p.NAME : geoid);
+}
+const esc = t => (t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+function fmtWhen(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+}
+function countyAlertCards(fips) {
+  const here = alerts.filter(a =>
+    ((a.properties.geocode && a.properties.geocode.SAME) || [])
+      .some(c => (c.length === 6 ? c.slice(1) : c) === fips));
+  if (!here.length) return { html: `<div class="sect">Active NWS alerts</div>` +
+    `<div class="method" style="margin-top:2px">No active alerts for this county.</div>`, n: 0 };
+  here.sort((a, b) => (SEV_RANK[a.properties.severity] ?? 4) - (SEV_RANK[b.properties.severity] ?? 4));
+  const cards = here.map((a, i) => {
+    const p = a.properties;
+    const c = SEV_COLOR[p.severity] || SEV_COLOR.Unknown;
+    const when = [p.onset ? 'from ' + fmtWhen(p.onset) : '', p.ends ? 'until ' + fmtWhen(p.ends) : (p.expires ? 'expires ' + fmtWhen(p.expires) : '')].filter(Boolean).join(' ');
+    const body = esc((p.description || '').trim() + (p.instruction ? '\n\nWHAT TO DO: ' + p.instruction.trim() : ''));
+    return `<div class="ca" style="border-left-color:${c}">` +
+      `<div class="ca-head" data-ca="${i}"><div class="ca-ev">${esc(p.event)}</div>` +
+      (when ? `<div class="ca-time">${esc(p.severity || '')} · ${when}</div>` : `<div class="ca-time">${esc(p.severity || '')}</div>`) +
+      (p.headline ? `<div class="ca-headline">${esc(p.headline)}</div>` : '') +
+      `<div class="ca-toggle">▸ full alert text</div></div>` +
+      `<div class="ca-desc">${body || '(no description provided)'}</div></div>`;
+  }).join('');
+  return { html: `<div class="sect">Active NWS alerts — ${here.length}</div>` + cards, n: here.length };
+}
+
+// Detailed county census card — click any county on the map
+function showCountyPanel(g) {
+  const a = acs[g] || {};
+  const hh = health[g];
+  const f = countyFeat[g];
+  const pop = (f && f.properties.POP2023) ?? a.pop ?? (countyPop[g] && countyPop[g][2]);
+  if (selLayer) { map.removeLayer(selLayer); selLayer = null; }
+  if (f) {
+    const ring = baseKey === 'dark' ? '#ffffff' : '#0b1b2e';
+    const fill = baseKey === 'dark' ? '#4da3ff' : '#123a63';   // dark solid fill on light maps
+    // halo underneath + heavy ring + strong fill so the county is unmistakable
+    selLayer = L.layerGroup([
+      L.geoJSON(f, { pane: 'p-selection', interactive: false,
+        style: { color: ring, weight: 9, opacity: 0.4, fill: false } }),
+      L.geoJSON(f, { pane: 'p-selection', interactive: false,
+        style: { color: ring, weight: 3.5, opacity: 1, fillColor: fill, fillOpacity: 0.75 } })
+    ]).addTo(map);
+    setFocus(false);   // keep the rest of the map readable when inspecting one county
+  }
+  const row = (l, v) => v != null ? `<div class="cpu-row"><span>${l}</span><span>${v}</span></div>` : '';
+  const pct = v => v != null ? v.toFixed(1) + '%' : null;
+  currentPanel = null;
+  setPanel(countyName(g),
+    countyAlertCards(g).html +
+    `<div class="big">${pop != null ? fmt(pop) : '–'}</div>` +
+    `<div class="biglabel">population (2023 estimate)</div>` +
+    `<div class="sect">People</div>` +
+    row('Median age', a.medage != null ? a.medage.toFixed(1) + ' yrs' : null) +
+    row('Age 65 and over', a.age65 != null && a.pop ? fmt(a.age65) + ' (' + Math.round(100 * a.age65 / a.pop) + '%)' : null) +
+    row('Under 5', a.under5 != null && a.pop ? fmt(a.under5) + ' (' + Math.round(100 * a.under5 / a.pop) + '%)' : null) +
+    `<div class="sect">Race &amp; ethnicity</div>` +
+    row('Hispanic or Latino', pct(a.hisp)) +
+    row('White alone', pct(a.white)) +
+    row('Black alone', pct(a.black)) +
+    row('Asian alone', pct(a.asian)) +
+    `<div class="sect">Economy</div>` +
+    row('Median household income', a.income != null ? '$' + fmt(a.income) : null) +
+    row('Below poverty', pct(a.pov_pct)) +
+    row('Unemployment rate', pct(a.unemp)) +
+    `<div class="sect">Housing &amp; access</div>` +
+    row('Mobile homes', a.mobile != null ? fmt(a.mobile) : null) +
+    row('Renter-occupied', pct(a.renter)) +
+    row('Households with no vehicle', pct(a.noveh)) +
+    `<div class="sect">Education, language, insurance</div>` +
+    row("Bachelor's degree or higher", pct(a.edu)) +
+    row('Language other than English at home', pct(a.lang)) +
+    row('With health insurance', pct(a.insured)) +
+    (hh ? `<div class="sect">Chronic disease — % of adults</div>` +
+      row('Type 2 diabetes', pct(hh.diab)) +
+      row('COPD', pct(hh.copd)) +
+      row('Coronary heart disease', pct(hh.chd)) +
+      row('High blood pressure', pct(hh.bphigh)) +
+      row('Current asthma', pct(hh.asthma)) +
+      row('Obesity', pct(hh.obesity)) +
+      row('Stroke (ever)', pct(hh.stroke)) +
+      row('Cancer (non-skin, ever)', pct(hh.cancer)) +
+      row('Depression', pct(hh.depr)) : '') +
+    `<div class="method">Source: U.S. Census Bureau — ACS 2023 5-year · Vintage 2023 estimates · CDC PLACES 2025 (chronic disease, model-based)</div>`);
+}
+
+// ---- Region jump buttons: CONUS / Alaska / Hawaii / Puerto Rico -----------
+const REGIONS = { US: [[39.5, -96.5], 5], AK: [[62.5, -152], 4], HI: [[20.6, -157.3], 7], PR: [[18.2, -66.4], 9] };
+const regionsDiv = document.createElement('div');
+regionsDiv.id = 'regions';
+regionsDiv.innerHTML = Object.keys(REGIONS).map(r => `<div class="rgn" data-r="${r}" title="Zoom to ${r}">${r}</div>`).join('') +
+  '<div class="rgn-sep"></div>' +
+  Object.entries(BASEMAPS).map(([k, b]) =>
+    `<div class="rgn bm" data-bm="${k}" title="${b.label} basemap">${b.label[0]}</div>`).join('');
+document.getElementById('map').appendChild(regionsDiv);
+L.DomEvent.disableClickPropagation(regionsDiv);
+regionsDiv.addEventListener('click', e => {
+  if (e.target.dataset.bm) { setBasemap(e.target.dataset.bm); return; }
+  const r = REGIONS[e.target.dataset.r];
+  if (r) map.setView(r[0], r[1]);
+});
+
+// ---- Map layer box: draggable, collapsible, closeable ---------------------
+const layerBox = document.createElement('div');
+layerBox.id = 'layer-box';
+layerBox.innerHTML =
+  '<div id="layer-head"><span>MAP LAYER</span><span class="lb-btns">' +
+  '<span id="layer-min" title="Collapse">–</span><span id="layer-close" title="Close">✕</span></span></div>' +
+  '<div id="layer-body"><select id="mode-sel">' +
+  Object.entries(MODES).map(([k, m]) => `<option value="${k}">${m.label}</option>`).join('') +
+  '</select><div id="legend-body"></div></div>';
+document.getElementById('map').appendChild(layerBox);
+const layerOpen = document.createElement('div');
+layerOpen.id = 'layer-open';
+layerOpen.textContent = '☰ Map layer';
+document.getElementById('map').appendChild(layerOpen);
+L.DomEvent.disableClickPropagation(layerBox);
+L.DomEvent.disableScrollPropagation(layerBox);
+L.DomEvent.disableClickPropagation(layerOpen);
+document.getElementById('mode-sel').addEventListener('change', e => { mode = e.target.value; restyleCounties(); });
+document.getElementById('layer-min').addEventListener('click', () => {
+  const b = document.getElementById('layer-body'), btn = document.getElementById('layer-min');
+  const hidden = b.style.display === 'none';
+  b.style.display = hidden ? 'block' : 'none';
+  btn.textContent = hidden ? '–' : '+';
+  btn.title = hidden ? 'Collapse' : 'Expand';
+});
+document.getElementById('layer-close').addEventListener('click', () => {
+  layerBox.style.display = 'none'; layerOpen.style.display = 'block';
+});
+layerOpen.addEventListener('click', () => {
+  layerOpen.style.display = 'none'; layerBox.style.display = 'block';
+});
+// Drag the box by its header
+(() => {
+  const head = document.getElementById('layer-head');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  head.addEventListener('pointerdown', e => {
+    if (e.target.closest('.lb-btns')) return;
+    dragging = true; sx = e.clientX; sy = e.clientY;
+    const r = layerBox.getBoundingClientRect(), pr = document.getElementById('map').getBoundingClientRect();
+    ox = r.left - pr.left; oy = r.top - pr.top;
+    layerBox.style.left = ox + 'px'; layerBox.style.top = oy + 'px';
+    layerBox.style.right = 'auto'; layerBox.style.bottom = 'auto';
+    map.dragging.disable();
+    head.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    const pr = document.getElementById('map').getBoundingClientRect();
+    const nx = Math.max(0, Math.min(pr.width - 60, ox + e.clientX - sx));
+    const ny = Math.max(0, Math.min(pr.height - 34, oy + e.clientY - sy));
+    layerBox.style.left = nx + 'px'; layerBox.style.top = ny + 'px';
+  });
+  head.addEventListener('pointerup', () => { dragging = false; map.dragging.enable(); });
+})();
+
+// Legend chips are blended exactly like the map draws them (ramp color at the
+// county fill opacity over the dark basemap) so legend and map truly match.
+function blendToMap(hex) {
+  const base = [16, 20, 26];   // dark basemap under 0.7-opacity county fill
+  const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+  return 'rgb(' + c.map((v, i) => Math.round(v * 0.7 + base[i] * 0.3)).join(',') + ')';
+}
+function updateLegend() {
+  if (mode === 'alerts') {
+    const rows = Object.keys(SEV_NAME).map(r =>
+      `<div class="lg-row"><i style="background:${blendToMap(SEV_FILL[r])}"></i><span>${SEV_NAME[r]} alert</span></div>`);
+    rows.push(`<div class="lg-row"><i style="background:#1f252e"></i><span>No active alert</span></div>`);
+    document.getElementById('legend-body').innerHTML = rows.join('');
+    return;
+  }
+  const m = MODES[mode];
+  const parts = [];
+  for (let i = 0; i < m.ramp.length; i++) {
+    const lo = i === 0 ? null : breaks[i - 1];
+    const hi = i < breaks.length ? breaks[i] : null;
+    const label = lo == null ? '< ' + m.fmt(hi) : hi == null ? m.fmt(lo) + '+' : m.fmt(lo) + ' – ' + m.fmt(hi);
+    parts.push(`<div class="lg-row"><i style="background:${blendToMap(m.ramp[i])}"></i><span>${label}</span></div>`);
+  }
+  document.getElementById('legend-body').innerHTML = parts.join('');
+}
+
+// ---- Spatial index: 1-degree grid over block-group centroids ---------------
+// Without this, every alert polygon was tested against all 240,942 centroids —
+// tens of millions of ops per refresh, which froze the page.
+let bgGrid = null, trGrid = null;
+const CELL = 1;   // degrees
+const cellKey = (x, y) => Math.floor(x / CELL) + ':' + Math.floor(y / CELL);
+function buildGrid(lons, lats) {
+  const g = new Map();
+  for (let i = 0; i < lats.length; i++) {
+    const k = cellKey(lons[i], lats[i]);
+    let arr = g.get(k);
+    if (!arr) g.set(k, arr = []);
+    arr.push(i);
+  }
+  return g;
+}
+function buildBgIndex() {
+  if (bg && !bgGrid) bgGrid = buildGrid(bg.lon, bg.lat);
+  if (tr && !trGrid) trGrid = buildGrid(tr.lon, tr.lat);
+}
+// Candidate point indices whose grid cells intersect the bbox [minX,minY,maxX,maxY]
+function candidates(grid, ab) {
+  const out = [];
+  const x0 = Math.floor(ab[0] / CELL), x1 = Math.floor(ab[2] / CELL);
+  const y0 = Math.floor(ab[1] / CELL), y1 = Math.floor(ab[3] / CELL);
+  for (let x = x0; x <= x1; x++) {
+    for (let y = y0; y <= y1; y++) {
+      const arr = grid.get(x + ':' + y);
+      if (arr) out.push(arr);
+    }
+  }
+  return out;
+}
+
+// ---- Alerts ---------------------------------------------------------------
+const SEV_COLOR = { Extreme: '#ff2d55', Severe: '#ff8c00', Moderate: '#ffd166', Minor: '#8ec8ff', Unknown: '#9aa7b6' };
+const SEV_RANK = { Extreme: 0, Severe: 1, Moderate: 2, Minor: 3, Unknown: 4 };
+let alerts = [], alertLayerGroup = L.layerGroup().addTo(map);
+let filterMode = 'all', searchText = '';
+const cssId = s => s.replace(/[^a-zA-Z0-9]/g, '_');
+
+function loadAlerts() {
+  const pr = document.getElementById('progress');
+  pr.textContent = 'Loading live NWS alerts…';
+  clearSelection();
+  fetch('https://api.weather.gov/alerts/active?status=actual')
+    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(j => {
+      alerts = (j.features || []).filter(a => a.properties && a.properties.event);
+      for (const a of alerts) a._pop = undefined;
+      document.getElementById('st-alerts').textContent = alerts.length;
+      sortAlerts();
+      buildGroups();
+      buildQueryPlan();     // free-text tokens are validated against the fresh alert set
+      renderAlertList();
+      drawAlertPolys();
+      computeCoverage();
+      restyleCounties();
+      computeAllExposures();
+    })
+    .catch(e => { pr.textContent = 'NWS alert feed failed: ' + e.message; });
+}
+
+function sortAlerts() {
+  alerts.sort((a, b) => {
+    const pa = a._pop == null ? -1 : a._pop.total;
+    const pb = b._pop == null ? -1 : b._pop.total;
+    if (pb !== pa) return pb - pa;
+    return (SEV_RANK[a.properties.severity] ?? 4) - (SEV_RANK[b.properties.severity] ?? 4);
+  });
+}
+
+// Natural-language-ish search: strip question words (typo-tolerant), expand
+// hazard synonyms, keep a free-text token only if it actually matches an alert
+// (a typo like "bering" must never zero out the results).
+const STOPWORDS = new Set(('how many people are is was were being affected impacted impact impacts right now by the a an ' +
+  'in under of us usa america american country nation nationwide entire whole all currently today tonight this that at ' +
+  'moment current total number what who whom which tell me show please alerts alert weather forecast forecasted from ' +
+  'and or to for with any there risk danger dangerous threatened exposed').split(' '));
+const SYNONYMS = {
+  smoke: ['air quality', 'smoke'], air: ['air quality'], quality: ['air quality'],
+  fire: ['red flag', 'fire weather', 'fire'], heat: ['heat'],
+  flood: ['flood', 'hydrologic'], flooding: ['flood'], tornado: ['tornado'], tornadoes: ['tornado'],
+  wind: ['wind', 'gale'], winter: ['winter', 'snow', 'ice', 'blizzard'], snow: ['snow', 'winter'],
+  ice: ['ice', 'freez', 'frost'], surf: ['surf', 'rip current', 'beach'], coastal: ['coastal', 'surf'],
+  rip: ['rip current'], currents: ['rip current'], storm: ['storm'], thunderstorm: ['thunderstorm'],
+  marine: ['marine', 'gale', 'seas'], hurricane: ['hurricane', 'tropical'], tropical: ['tropical', 'hurricane'],
+  fog: ['fog'], dust: ['dust'], smog: ['air quality'],
+};
+const STATE_FIPS = { alabama: '01', alaska: '02', arizona: '04', arkansas: '05', california: '06', colorado: '08',
+  connecticut: '09', delaware: '10', 'district of columbia': '11', florida: '12', georgia: '13', hawaii: '15',
+  idaho: '16', illinois: '17', indiana: '18', iowa: '19', kansas: '20', kentucky: '21', louisiana: '22', maine: '23',
+  maryland: '24', massachusetts: '25', michigan: '26', minnesota: '27', mississippi: '28', missouri: '29',
+  montana: '30', nebraska: '31', nevada: '32', 'new hampshire': '33', 'new jersey': '34', 'new mexico': '35',
+  'new york': '36', 'north carolina': '37', 'north dakota': '38', ohio: '39', oklahoma: '40', oregon: '41',
+  pennsylvania: '42', 'rhode island': '44', 'south carolina': '45', 'south dakota': '46', tennessee: '47',
+  texas: '48', utah: '49', vermont: '50', virginia: '51', washington: '53', 'west virginia': '54', wisconsin: '55',
+  wyoming: '56', 'puerto rico': '72' };
+const VOCAB = [...STOPWORDS, ...Object.keys(SYNONYMS)];
+function editDistance(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const dp = Array.from({ length: a.length + 1 }, (_, i) => [i, ...Array(b.length).fill(0)]);
+  for (let j = 1; j <= b.length; j++) dp[0][j] = j;
+  for (let i = 1; i <= a.length; i++)
+    for (let j = 1; j <= b.length; j++)
+      dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+  return dp[a.length][b.length];
+}
+function correctToken(t) {
+  if (t.length < 3) return null;
+  const maxDist = t.length <= 4 ? 1 : 2;
+  let best = null, bestD = maxDist + 1;
+  for (const w of VOCAB) {
+    const d = editDistance(t, w);
+    if (d < bestD) { bestD = d; best = w; }
+  }
+  return bestD <= maxDist ? best : null;
+}
+// Query plan, rebuilt whenever the search text changes:
+//   required = groups of terms (each group: at least one term must match the alert)
+//   ignored  = noise/typo tokens that match nothing (shown to the user, never zero out results)
+let queryPlan = { required: [], states: [], stateNames: [], ignored: [], noMatch: false };
+function buildQueryPlan() {
+  const plan = { required: [], states: [], stateNames: [], ignored: [], noMatch: false };
+  if (searchText) {
+    const raw = searchText.replace(/[?.,!'"]/g, ' ').split(/\s+/).filter(Boolean);
+    // consume state names first (two-word states before one-word)
+    const rest = [];
+    for (let i = 0; i < raw.length; i++) {
+      const two = i + 1 < raw.length ? raw[i] + ' ' + raw[i + 1] : null;
+      if (two && STATE_FIPS[two]) { plan.states.push(STATE_FIPS[two]); plan.stateNames.push(two); i++; continue; }
+      if (STATE_FIPS[raw[i]] && !STOPWORDS.has(raw[i])) { plan.states.push(STATE_FIPS[raw[i]]); plan.stateNames.push(raw[i]); continue; }
+      rest.push(raw[i]);
+    }
+    for (let t of rest) {
+      if (STOPWORDS.has(t)) continue;
+      if (!SYNONYMS[t]) {
+        const c = correctToken(t);
+        if (c && STOPWORDS.has(c)) continue;
+        if (c && SYNONYMS[c]) t = c;
+      }
+      if (SYNONYMS[t]) { plan.required.push(SYNONYMS[t]); continue; }
+      // free text (county, city…): require it only if it matches something real
+      const hit = alerts.some(al =>
+        ((al.properties.event + ' ' + (al.properties.areaDesc || '')).toLowerCase()).includes(t));
+      if (hit) plan.required.push([t]); else plan.ignored.push(t);
+    }
+    // Content words that matched nothing and no usable filters left → honest "no match",
+    // never a misleading fallback to the national total
+    plan.noMatch = !plan.required.length && !plan.states.length && plan.ignored.length > 0;
+  }
+  queryPlan = plan;
+}
+function passesFilter(a) {
+  const p = a.properties;
+  if (filterMode === 'extreme' && !['Extreme', 'Severe'].includes(p.severity)) return false;
+  if (filterMode === 'warning' && !/warning/i.test(p.event)) return false;
+  if (filterMode === 'people' && !(a._pop && a._pop.total > 0)) return false;
+  if (queryPlan.noMatch) return false;
+  if (queryPlan.states.length) {
+    const rows = a._pop && a._pop.rows;
+    if (!rows || !rows.some(r => r.fips && queryPlan.states.some(s => r.fips.startsWith(s)))) return false;
+  }
+  if (queryPlan.required.length) {
+    const hay = (p.event + ' ' + (p.areaDesc || '')).toLowerCase();
+    for (const group of queryPlan.required) {
+      if (!group.some(term => hay.includes(term))) return false;
+    }
+  }
+  return true;
+}
+
+// Union population of a set of alerts — each person counted once
+let _fipsPop = null;   // county fips -> summed block-group population (built once)
+function unionPop(list) {
+  if (!_fipsPop) {
+    _fipsPop = new Map();
+    for (let i = 0; i < bg.lat.length; i++) _fipsPop.set(bg.fips[i], (_fipsPop.get(bg.fips[i]) || 0) + bg.pop[i]);
+  }
+  const inCounty = new Set();
+  let t = 0;
+  const polyIdx = [];
+  for (const a of list) {
+    if (a._bgIdx) polyIdx.push(a._bgIdx);
+    else if (!a.geometry && a._pop && a._pop.rows) for (const r of a._pop.rows) inCounty.add(r.fips);
+  }
+  // whole counties first (no per-point scan)
+  for (const f of inCounty) t += _fipsPop.get(f) || 0;
+  // then polygon block groups, skipping any already counted via their county
+  if (polyIdx.length) {
+    const seen = new Set();
+    for (const arr of polyIdx) for (const i of arr) {
+      if (seen.has(i) || inCounty.has(bg.fips[i])) continue;
+      seen.add(i); t += bg.pop[i];
+    }
+  }
+  return t;
+}
+
+// ---- Grouping: one card per alert TYPE ("Heat Advisory · 28 alerts") ------
+let groups = [];
+function buildGroups() {
+  const byEvent = new Map();
+  for (const a of alerts) {
+    const ev = a.properties.event;
+    if (!byEvent.has(ev)) byEvent.set(ev, { event: ev, members: [], unionTotal: null, sev: 'Unknown' });
+    const g = byEvent.get(ev);
+    g.members.push(a);
+    if ((SEV_RANK[a.properties.severity] ?? 4) < (SEV_RANK[g.sev] ?? 4)) g.sev = a.properties.severity;
+  }
+  groups = [...byEvent.values()];
+}
+function finishGroups() {   // after exposure compute: union totals + member order
+  for (const g of groups) {
+    g.members.sort((a, b) => ((b._pop && b._pop.total) || 0) - ((a._pop && a._pop.total) || 0));
+    g.unionTotal = unionPop(g.members);
+  }
+}
+
+function renderAlertList() {
+  const el = document.getElementById('alert-list');
+  el.innerHTML = '';
+  const matched = [];
+  const vis = [];
+  for (const g of groups) {
+    const members = g.members.filter(passesFilter);
+    if (!members.length) continue;
+    matched.push(...members);
+    vis.push({ g, members });
+  }
+  vis.sort((x, y) => ((y.g.unionTotal ?? -1) - (x.g.unionTotal ?? -1)));
+  for (const { g, members } of vis) {
+    const d = document.createElement('div');
+    d.className = 'alert-item';
+    d.id = 'gi-' + cssId(g.event);
+    d.dataset.group = g.event;
+    d.style.borderLeftColor = SEV_COLOR[g.sev] || SEV_COLOR.Unknown;
+    const popHtml = g.unionTotal == null ? '<span class="pop na">…</span>'
+      : g.unionTotal === 0 ? '<span class="pop na">no pop. data</span>'
+      : `<span class="pop">${fmtShort(g.unionTotal)}</span>`;
+    const partial = members.length !== g.members.length ? `${members.length} of ${g.members.length}` : `${g.members.length}`;
+    d.innerHTML =
+      `<div class="ai-top"><span class="ev">${g.event}</span>${popHtml}</div>` +
+      `<div class="gi-sub">${partial} alert${g.members.length > 1 ? 's' : ''}${g.members.length > 1 ? ' · click to show all on map' : ''}</div>` +
+      (g.members.length > 1 ? `<div class="gi-expand" data-exp>▸ individual alerts</div><div class="gi-members" style="display:none"></div>` : '');
+    if (g.members.length === 1) d.dataset.alertId = g.members[0].id;
+    el.appendChild(d);
+  }
+  if (!vis.length) el.innerHTML = '<div style="color:var(--muted);padding:12px">No alerts match this filter.</div>';
+  updateAnswer(matched);
+}
+
+function fillMembers(card, g) {
+  const box = card.querySelector('.gi-members');
+  if (!box || box.childElementCount) return;
+  for (const a of g.members.filter(passesFilter)) {
+    const m = document.createElement('div');
+    m.className = 'gi-m';
+    m.id = 'ai-' + cssId(a.id);
+    m.dataset.alertId = a.id;
+    const pop = a._pop && a._pop.total > 0 ? fmtShort(a._pop.total) : '–';
+    m.innerHTML = `<span>${(a.properties.areaDesc || '(no area)').slice(0, 60)}</span><span class="mp">${pop}</span>`;
+    box.appendChild(m);
+  }
+}
+
+// Answer bar: when the user searches/asks, give the number, not just a filter
+function updateAnswer(matched) {
+  const el = document.getElementById('answer');
+  if (!searchText || !bg) { el.style.display = 'none'; return; }
+  const ignoredNote = queryPlan.ignored.length
+    ? ` · ignored: "${queryPlan.ignored.join('", "')}"` : '';
+  if (!matched.length) {
+    el.innerHTML = 'No active alerts match — nobody is currently under an alert of that type.' +
+      '<div class="sub">Checked all ' + alerts.length + ' live NWS alerts' + ignoredNote + '.</div>';
+    el.style.display = 'block';
+    return;
+  }
+  const total = unionPop(matched);
+  const generic = !queryPlan.required.length && !queryPlan.states.length;
+  const stateNote = queryPlan.stateNames.length
+    ? ' in ' + queryPlan.stateNames.map(s => s.replace(/\b\w/g, c => c.toUpperCase())).join(' + ') : '';
+  const kinds = [...new Set(matched.map(a => a.properties.event))];
+  el.innerHTML = `<span class="num">~${fmt(total)}</span> people are under ` +
+    (generic ? `at least one of all ${matched.length} active alerts`
+             : `${matched.length} matching alert${matched.length > 1 ? 's' : ''}${stateNote}`) +
+    `<div class="sub">${generic ? 'every active NWS alert type' :
+      kinds.slice(0, 3).join(' · ') + (kinds.length > 3 ? ' · +' + (kinds.length - 3) + ' more types' : '')}` +
+    ` — each person counted once · Census block-group data${ignoredNote}</div>`;
+  el.style.display = 'block';
+}
+// Delegated clicks — survive list re-renders. Member row → single alert;
+// ▸ toggle → expand; group card → ALL of that type on the map at once.
+document.getElementById('alert-list').addEventListener('click', e => {
+  const card = e.target.closest('.alert-item');
+  if (!card) return;
+  const memberRow = e.target.closest('.gi-m');
+  if (memberRow && memberRow.dataset.alertId) {
+    const a = alerts.find(x => x.id === memberRow.dataset.alertId);
+    if (a) selectAlert(a, true);
+    return;
+  }
+  if (e.target.dataset.exp !== undefined) {
+    const g = groups.find(x => x.event === card.dataset.group);
+    if (g) fillMembers(card, g);
+    const box = card.querySelector('.gi-members');
+    const open = box.style.display !== 'none';
+    box.style.display = open ? 'none' : 'block';
+    e.target.textContent = (open ? '▸' : '▾') + ' individual alerts';
+    return;
+  }
+  if (card.dataset.alertId) {
+    const a = alerts.find(x => x.id === card.dataset.alertId);
+    if (a) selectAlert(a, true);
+    return;
+  }
+  const g = groups.find(x => x.event === card.dataset.group);
+  if (g) selectGroup(g);
+});
+
+// Select a whole group: every alert of this type lights up at once
+function selectGroup(g) {
+  if (selLayer) { map.removeLayer(selLayer); selLayer = null; }
+  const sevC = (g.sev && g.sev !== 'Unknown' && SEV_COLOR[g.sev]) || '#ffd166';
+  const feats = [];
+  const seen = new Set();
+  for (const a of g.members) {
+    if (a.geometry) feats.push({ type: 'Feature', geometry: a.geometry, properties: {} });
+    else if (a._pop && a._pop.rows) {
+      for (const r of a._pop.rows) {
+        if (r.fips && !seen.has(r.fips) && countyFeat[r.fips]) { seen.add(r.fips); feats.push(countyFeat[r.fips]); }
+      }
+    }
+  }
+  if (feats.length) {
+    selLayer = L.geoJSON({ type: 'FeatureCollection', features: feats },
+      { pane: 'p-selection', interactive: false, style: { color: '#ffffff', weight: 1.2, opacity: 0.7, fillColor: sevC, fillOpacity: 0.42 } }).addTo(map);
+  }
+  setFocus(!!selLayer);
+  document.querySelectorAll('.alert-item.sel, .gi-m.sel').forEach(x => x.classList.remove('sel'));
+  const card = document.getElementById('gi-' + cssId(g.event));
+  if (card) { card.classList.add('sel'); card.scrollIntoView({ block: 'nearest' }); }
+  if (selLayer) {
+    // A group spanning Alaska→Gulf would zoom to the whole planet — keep the
+    // national frame instead when the footprint is that wide
+    const b = selLayer.getBounds();
+    const wide = b.getEast() - b.getWest() > 65 || b.getNorth() - b.getSouth() > 30;
+    if (wide) map.setView([39.5, -96.5], 5);
+    else map.fitBounds(b, { padding: [30, 30], maxZoom: 7 });
+  }
+  showGroupPanel(g);
+}
+
+function showGroupPanel(g) {
+  // merge county rows across members (a county under two advisories counts once)
+  const byCounty = {};
+  for (const a of g.members) {
+    if (!a._pop || !a._pop.rows) continue;
+    for (const r of a._pop.rows) {
+      if (!r.fips) continue;
+      byCounty[r.fips] = Math.max(byCounty[r.fips] || 0, r.pop);
+    }
+  }
+  const rows = Object.entries(byCounty).map(([f, pop]) => {
+    const rec = countyPop[f];
+    return { fips: f, name: rec ? countyName(f) : 'FIPS ' + f, pop, frac: rec ? pop / rec[2] : null };
+  }).sort((x, y) => y.pop - x.pop);
+  const res = { total: g.unionTotal ?? rows.reduce((s, r) => s + r.pop, 0), rows };
+  const d = demographics(res);
+  currentPanel = showAll => setPanel(`${g.event} — all ${g.members.length} alerts`,
+    `<div class="big">~${fmt(Math.round(res.total))}</div>` +
+    `<div class="biglabel">people under at least one ${g.event}</div>` +
+    demoGrid(d) +
+    healthGrid(healthEstimates(rows)) +
+    countyTable(rows, showAll) +
+    `<div class="method">Union of all ${g.members.length} active ${g.event} alerts — overlapping areas and people counted once. ` +
+    `Demographics apply county ACS 2023 shares; health = CDC PLACES 2025 prevalence × adults.<br>Source: U.S. Census Bureau · CDC PLACES 2025 · NWS live alerts</div>`);
+  currentPanel(false);
+}
+
+const coverageGroup = L.layerGroup().addTo(map);
+function computeCoverage() {
+  coverageWorst = {};   // county fips -> worst (lowest rank) alert severity, ALL alerts
+  for (const a of alerts) {
+    const same = (a.properties.geocode && a.properties.geocode.SAME) || [];
+    const rank = SEV_RANK[a.properties.severity] ?? 4;
+    for (const code of same) {
+      const fips = code.length === 6 ? code.slice(1) : code;
+      if (coverageWorst[fips] === undefined || rank < coverageWorst[fips]) coverageWorst[fips] = rank;
+    }
+  }
+}
+function renderCoverage() {
+  coverageGroup.clearLayers();
+  if (mode === 'alerts') return;   // county fills already carry the alert colors
+  const byRank = {};
+  for (const [fips, rank] of Object.entries(coverageWorst)) {
+    if (!countyFeat[fips]) continue;
+    (byRank[rank] = byRank[rank] || []).push(countyFeat[fips]);
+  }
+  for (const [rank, feats] of Object.entries(byRank)) {
+    L.geoJSON({ type: 'FeatureCollection', features: feats },
+      { pane: 'p-coverage', interactive: false,
+        style: { fill: false, color: SEV_FILL[rank], weight: 1.4, opacity: 0.85 } }).addTo(coverageGroup);
+  }
+}
+
+function drawAlertPolys() {
+  alertLayerGroup.clearLayers();
+  for (const a of alerts) {
+    if (!a.geometry) continue;
+    const p = a.properties;
+    const c = SEV_COLOR[p.severity] || '#9aa7b6';
+    L.geoJSON(a, { pane: 'p-alerts', renderer: alertsRenderer,
+                   style: { color: c, weight: 1.5, fillColor: c, fillOpacity: 0.12 } })
+      .on('click', () => selectAlert(a, false)).addTo(alertLayerGroup);
+  }
+}
+
+// ---- Exposure engine ------------------------------------------------------
+function rowsFromCounties(byCounty) {
+  return Object.entries(byCounty).map(([f, pop]) => {
+    const rec = countyPop[f];
+    return { fips: f, name: rec ? countyName(f) : 'FIPS ' + f, pop, frac: rec ? pop / rec[2] : null };
+  }).sort((x, y) => y.pop - x.pop);
+}
+
+function sameExposure(a) {
+  const same = (a.properties.geocode && a.properties.geocode.SAME) || [];
+  if (!same.length) return null;
+  const byCounty = {};
+  for (const code of same) {
+    const fips = code.length === 6 ? code.slice(1) : code;
+    const rec = countyPop[fips];
+    if (rec) byCounty[fips] = rec[2];
+  }
+  const rows = rowsFromCounties(byCounty);
+  if (!rows.length) return null;
+  return { total: rows.reduce((s, r) => s + r.pop, 0), rows,
+           method: 'Exact sum of the ' + rows.length + ' counties in this alert (NWS county codes × Census populations).' };
+}
+
+let coveredBG = null, coveredCounties = null, computeToken = 0;
+function polygonExposure(a, mark) {
+  const ab = turf.bbox(a);
+  let total = 0; const byCounty = {};
+  const idx = mark ? [] : null;
+  if (!bgGrid) buildBgIndex();
+  for (const bucket of candidates(bgGrid, ab)) {
+    for (const i of bucket) {
+      const x = bg.lon[i], y = bg.lat[i];
+      if (x < ab[0] || x > ab[2] || y < ab[1] || y > ab[3]) continue;
+      try { if (!turf.booleanPointInPolygon([x, y], a)) continue; } catch (e) { continue; }
+      total += bg.pop[i];
+      if (mark) { coveredBG[i] = 1; idx.push(i); }
+      byCounty[bg.fips[i]] = (byCounty[bg.fips[i]] || 0) + bg.pop[i];
+    }
+  }
+  if (mark) a._bgIdx = idx;   // cached footprint → instant question answers
+  if (total === 0) return { total: 0, rows: [], method: 'No populated Census block groups inside this polygon.' };
+  return { total, rows: rowsFromCounties(byCounty),
+           method: 'Census block-group population centroids inside the alert polygon (2020 Census, scaled to county 2023 estimates).' };
+}
+
+function exposure(a, mark) {
+  if (a.geometry && bg) return polygonExposure(a, mark);
+  const res = sameExposure(a);
+  if (mark && res) for (const r of res.rows) coveredCounties.add(r.fips);
+  return res;
+}
+
+function computeAllExposures() {
+  const token = ++computeToken;
+  coveredBG = new Uint8Array(bg.lat.length);
+  coveredCounties = new Set();
+  const pr = document.getElementById('progress');
+  let i = 0;
+  function chunk() {
+    if (token !== computeToken) return;
+    const t0 = performance.now();
+    const budget = document.hidden ? 800 : 120;   // hidden tab: bigger slices, but keep yielding
+    while (i < alerts.length && performance.now() - t0 < budget) {
+      const a = alerts[i];
+      a._pop = exposure(a, true);
+      // update this card's badge in place — no list rebuild while the user browses
+      const card = document.getElementById('ai-' + cssId(a.id));
+      if (card) {
+        const span = card.querySelector('.pop');
+        if (span) {
+          if (a._pop && a._pop.total > 0) { span.textContent = fmtShort(a._pop.total); span.classList.remove('na'); }
+          else span.textContent = 'no pop. data';
+        }
+      }
+      i++;
+    }
+    pr.textContent = 'Computing population exposure… ' + i + ' / ' + alerts.length;
+    updateHeadline();
+    if (i < alerts.length) setTimeout(chunk, 0);
+    else {
+      sortAlerts(); finishGroups(); renderAlertList();
+      pr.textContent = alerts.length + ' alerts in ' + groups.length + ' types, ranked by population · updated ' + new Date().toLocaleTimeString();
+    }
+  }
+  chunk();
+}
+
+function updateHeadline() {
+  let total = 0;
+  for (let i = 0; i < bg.lat.length; i++) {
+    if (coveredBG[i] || coveredCounties.has(bg.fips[i])) total += bg.pop[i];
+  }
+  document.getElementById('st-people').textContent = fmtShort(total);
+  document.getElementById('st-people').title = fmt(total) + ' — union: each person counted once';
+}
+
+// ---- Demographic slice for an exposure ------------------------------------
+// Polygon alerts: sum ACS tract values whose population-weighted centroid falls
+// inside the polygon (finer than county shares).
+function tractDemographics(a) {
+  if (!tr || !a.geometry) return null;
+  const ab = turf.bbox(a);
+  let pop = 0, a65 = 0, u5 = 0, mob = 0, povn = 0, diab = 0, copd = 0, chd = 0, bphigh = 0;
+  const hasHealth = !!tr.diabn;
+  if (!trGrid) buildBgIndex();
+  for (const bucket of candidates(trGrid, ab)) {
+    for (const i of bucket) {
+      const x = tr.lon[i], y = tr.lat[i];
+      if (x < ab[0] || x > ab[2] || y < ab[1] || y > ab[3]) continue;
+      try { if (!turf.booleanPointInPolygon([x, y], a)) continue; } catch (e) { continue; }
+      pop += tr.pop[i]; a65 += tr.a65[i]; u5 += tr.u5[i]; mob += tr.mob[i]; povn += tr.povn[i];
+      if (hasHealth) { diab += tr.diabn[i]; copd += tr.copdn[i]; chd += tr.chdn[i]; bphigh += tr.bphighn[i]; }
+    }
+  }
+  if (!pop) return null;
+  return { a65, u5, mob, pov: 100 * povn / pop, tract: true,
+           health: hasHealth && (diab || copd || chd || bphigh) ? { diab, copd, chd, bphigh, tract: true } : null };
+}
+
+function demographics(res) {
+  let a65 = 0, u5 = 0, mob = 0, povW = 0, povP = 0, ok = false;
+  for (const r of res.rows) {
+    const a = acs[r.fips];
+    if (!a || !a.pop) continue;
+    const share = Math.min(1, r.pop / a.pop);
+    ok = true;
+    if (a.age65 != null) a65 += a.age65 * share;
+    if (a.under5 != null) u5 += a.under5 * share;
+    if (a.mobile != null) mob += a.mobile * share;
+    if (a.pov_pct != null) { povW += a.pov_pct * r.pop; povP += r.pop; }
+  }
+  if (!ok) return null;
+  return { a65, u5, mob, pov: povP ? povW / povP : null };
+}
+
+// ---- Panel machinery: one draggable, scrollable panel for everything ------
+function setPanel(title, bodyHtml) {
+  document.getElementById('expo-title').textContent = title;
+  document.getElementById('expo-body').innerHTML = bodyHtml;
+  document.getElementById('expo').style.display = 'block';
+}
+document.getElementById('expo-close').addEventListener('click', clearSelection);
+// Drag by the panel header
+(() => {
+  const head = document.getElementById('expo-head'), box = document.getElementById('expo');
+  let dragging = false, sx = 0, sy = 0, ox = 0, oy = 0;
+  head.addEventListener('pointerdown', e => {
+    if (e.target.classList.contains('close')) return;
+    dragging = true; sx = e.clientX; sy = e.clientY;
+    const r = box.getBoundingClientRect();
+    ox = r.left; oy = r.top;
+    box.style.left = ox + 'px'; box.style.top = oy + 'px'; box.style.right = 'auto';
+    head.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  head.addEventListener('pointermove', e => {
+    if (!dragging) return;
+    box.style.left = Math.max(0, ox + e.clientX - sx) + 'px';
+    box.style.top = Math.max(0, oy + e.clientY - sy) + 'px';
+  });
+  head.addEventListener('pointerup', () => { dragging = false; });
+})();
+// "+N more counties — show all" expander (re-renders the current panel with all rows)
+let currentPanel = null;
+document.getElementById('expo-body').addEventListener('click', e => {
+  if (e.target.dataset.more !== undefined && currentPanel) { currentPanel(true); return; }
+  if (e.target.dataset.less !== undefined && currentPanel) { currentPanel(false); return; }
+  const head = e.target.closest('.ca-head');
+  if (head) {
+    const desc = head.parentElement.querySelector('.ca-desc');
+    const open = desc.style.display === 'block';
+    desc.style.display = open ? 'none' : 'block';
+    head.querySelector('.ca-toggle').textContent = (open ? '▸' : '▾') + ' full alert text';
+  }
+});
+function countyTable(rows, showAll) {
+  const top = showAll ? rows : rows.slice(0, 10);
+  if (!top.length) return '';
+  return `<table><tr><th>County</th><th class="n">People</th><th class="n">% of county</th></tr>` +
+    top.map(r => `<tr><td>${r.name}</td><td class="n">${fmt(Math.round(r.pop))}</td>` +
+      `<td class="n">${r.frac != null ? Math.round(r.frac * 100) + '%' : '–'}</td></tr>`).join('') +
+    (rows.length > 10 ? `<tr><td colspan="3">` +
+      (showAll ? `<span class="more-link" data-less>show top 10 only</span>`
+               : `<span class="more-link" data-more>+ ${rows.length - 10} more counties — show all</span>`) +
+      `</td></tr>` : '') + `</table>`;
+}
+
+// ---- Selection / details panel -------------------------------------------
+function clearSelection() {
+  if (selLayer) { map.removeLayer(selLayer); selLayer = null; }
+  setFocus(false);
+  document.getElementById('expo').style.display = 'none';
+  document.querySelectorAll('.alert-item.sel, .gi-m.sel').forEach(e => e.classList.remove('sel'));
+}
+
+function selectAlert(a, zoom) {
+  if (selLayer) { map.removeLayer(selLayer); selLayer = null; }
+  const sev = a.properties.severity;
+  const sevC = (sev && sev !== 'Unknown' && SEV_COLOR[sev]) || '#ffd166';
+  if (a.geometry) {
+    // Polygon alert: unmistakable emphasis — bright white outline + severity fill
+    const ring = baseKey === 'dark' ? '#ffffff' : '#0b1b2e';
+    selLayer = L.layerGroup([
+      L.geoJSON(a, { pane: 'p-selection', interactive: false,
+        style: { color: ring, weight: 8, opacity: 0.3, fill: false } }),
+      L.geoJSON(a, { pane: 'p-selection', interactive: false,
+        style: { color: ring, weight: 2.5, opacity: 1, fillColor: sevC, fillOpacity: 0.7 } })
+    ]).addTo(map);
+  } else if (a._pop && a._pop.rows) {
+    // Zone alert (air quality/smoke/heat…): light its counties up — thin edges so
+    // the fill reads as one clear region, not a white lattice
+    const feats = a._pop.rows.map(r => countyFeat[r.fips]).filter(Boolean);
+    if (feats.length) {
+      const fc = { type: 'FeatureCollection', features: feats };
+      const ring = baseKey === 'dark' ? '#ffffff' : '#0b1b2e';
+      selLayer = L.layerGroup([
+        // soft halo around the whole affected region
+        L.geoJSON(fc, { pane: 'p-selection', interactive: false,
+          style: { color: ring, weight: 8, opacity: 0.28, fill: false } }),
+        // solid severity fill + crisp edges
+        L.geoJSON(fc, { pane: 'p-selection', interactive: false,
+          style: { color: ring, weight: 1.4, opacity: 0.85, fillColor: sevC, fillOpacity: 0.72 } })
+      ]).addTo(map);
+    }
+  }
+  setFocus(!!selLayer);   // dim everything that isn't the selection
+  document.querySelectorAll('.alert-item.sel, .gi-m.sel').forEach(e => e.classList.remove('sel'));
+  const item = document.getElementById('ai-' + cssId(a.id));
+  if (item) { item.classList.add('sel'); item.scrollIntoView({ block: 'nearest' }); }
+  if (zoom && selLayer) map.fitBounds(selLayer.getBounds(), { maxZoom: a.geometry ? 9 : 8, padding: [30, 30] });
+  if (a._pop === undefined) a._pop = exposure(a, false);   // cones: compute once, cache
+  showExposure(a, a._pop);
+}
+
+function healthEstimates(rows) {
+  let diab = 0, copd = 0, chd = 0, bphigh = 0, ok = false;
+  for (const r of rows) {
+    const h = health[r.fips], a = acs[r.fips];
+    if (!h || !h.adults || !a || !a.pop) continue;
+    const share = Math.min(1, r.pop / a.pop);
+    ok = true;
+    if (h.diab != null) diab += h.adults * share * h.diab / 100;
+    if (h.copd != null) copd += h.adults * share * h.copd / 100;
+    if (h.chd != null) chd += h.adults * share * h.chd / 100;
+    if (h.bphigh != null) bphigh += h.adults * share * h.bphigh / 100;
+  }
+  return ok ? { diab, copd, chd, bphigh } : null;
+}
+function healthGrid(h) {
+  return h ? `<div id="demo-grid">` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(h.diab)}</div><div class="dl">Diabetes</div></div>` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(h.copd)}</div><div class="dl">COPD</div></div>` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(h.chd)}</div><div class="dl">Heart disease</div></div>` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(h.bphigh)}</div><div class="dl">High blood pressure</div></div>` +
+    `</div>` : '';
+}
+
+function demoGrid(d) {
+  return d ? `<div id="demo-grid">` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(d.a65)}</div><div class="dl">Age 65+</div></div>` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(d.u5)}</div><div class="dl">Under 5</div></div>` +
+    `<div class="demo-cell"><div class="dv">~${fmtShort(d.mob)}</div><div class="dl">Mobile homes</div></div>` +
+    `<div class="demo-cell"><div class="dv">${d.pov != null ? d.pov.toFixed(0) + '%' : '–'}</div><div class="dl">Below poverty</div></div>` +
+    `</div>` : '';
+}
+
+function showExposure(a, res) {
+  const p = a.properties;
+  if (!res) {
+    currentPanel = null;
+    setPanel(p.event, `<div class="method">No population computable (marine zone or no county codes).</div>`);
+    return;
+  }
+  const d = tractDemographics(a) || demographics(res);
+  currentPanel = showAll => setPanel(p.event,
+    `<div style="color:var(--muted);font-size:.78rem;line-height:1.35">${(p.areaDesc || '').slice(0, 140)}</div>` +
+    `<div class="big">~${fmt(Math.round(res.total))}</div>` +
+    `<div class="biglabel">people in this alert</div>` +
+    demoGrid(d) +
+    healthGrid((d && d.health) || healthEstimates(res.rows)) +
+    countyTable(res.rows, showAll) +
+    `<div class="method">${res.method} ` +
+    (d && d.tract ? 'Demographics = ACS 2023 tract values summed for tracts inside the polygon.'
+                  : 'Demographic estimates apply each county\'s ACS 2023 shares to its people in this alert.') + `<br>` +
+    `Health: est. adults with each condition, CDC PLACES 2025 (tract-level inside polygons where available, else county prevalence × share).<br>Source: U.S. Census Bureau · CDC PLACES 2025 · NWS live alerts</div>`);
+  currentPanel(false);
+}
+
+// ---- NHC forecast cones (live, NOAA tropical MapServer) -------------------
+const CONE_LAYER_IDS = [8, 34, 60, 86, 112, 138, 164, 190, 216, 242, 268, 294, 320, 346, 372];
+const coneGroup = L.layerGroup().addTo(map);
+function loadCones() {
+  coneGroup.clearLayers();
+  const base = 'https://mapservices.weather.noaa.gov/tropical/rest/services/tropical/NHC_tropical_weather/MapServer/';
+  const q = '/query?where=1%3D1&outFields=stormname,stormtype,basin,stormnum,advisnum,advdate&f=geojson';
+  Promise.allSettled(CONE_LAYER_IDS.map(id => fetch(base + id + q).then(r => r.json())))
+    .then(results => {
+      let n = 0;
+      for (const r of results) {
+        if (r.status !== 'fulfilled' || !r.value.features) continue;
+        for (const f of r.value.features) {
+          n++;
+          const p = f.properties;
+          const pseudo = {
+            type: 'Feature',   // turf/Leaflet need a real Feature or every call on it throws
+            id: 'cone-' + p.basin + p.stormnum,
+            geometry: f.geometry,
+            properties: {
+              event: 'NHC Forecast Cone — ' + p.stormname + ' (' + p.stormtype + ')',
+              severity: 'Severe',
+              areaDesc: (p.advdate || '') + ' · advisory ' + (p.advisnum || '?'),
+              geocode: {}
+            }
+          };
+          L.geoJSON(f, { pane: 'p-alerts', renderer: alertsRenderer,
+                         style: { color: '#c084fc', weight: 2.5, dashArray: '7 5', fillColor: '#c084fc', fillOpacity: 0.13 } })
+            .bindTooltip('Forecast cone: ' + p.stormname + ' — click for population', { sticky: true, className: 'county-tip' })
+            .on('click', () => selectAlert(pseudo, false))
+            .addTo(coneGroup);
+        }
+      }
+      if (n) {
+        const pr = document.getElementById('progress');
+        pr.textContent += ' · ' + n + ' active tropical cone' + (n > 1 ? 's' : '');
+      }
+    });
+}
+setTimeout(loadCones, 4000);
+setInterval(loadCones, 30 * 60 * 1000);
+
+// ---- Controls -------------------------------------------------------------
+document.getElementById('chips').addEventListener('click', e => {
+  if (e.target.id === 'reset-chip') { resetAll(); return; }
+  if (!e.target.dataset.f) return;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
+  e.target.classList.add('on');
+  filterMode = e.target.dataset.f;
+  renderAlertList();
+});
+const searchEl = document.getElementById('search');
+function applySearch(v) {
+  searchEl.value = v;
+  searchText = v.trim().toLowerCase();
+  document.getElementById('search-clear').style.display = searchText ? 'block' : 'none';
+  buildQueryPlan();
+  renderAlertList();
+}
+searchEl.addEventListener('input', e => applySearch(e.target.value));
+searchEl.addEventListener('keydown', e => { if (e.key === 'Escape') applySearch(''); });
+document.getElementById('search-clear').addEventListener('click', () => applySearch(''));
+// Full reset: question, filters, selection, map view — back to the opening state
+function resetAll() {
+  applySearch('');
+  filterMode = 'all';
+  document.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.f === 'all'));
+  clearSelection();
+  map.setView([39.5, -96.5], 5);
+  renderAlertList();
+}
+setInterval(loadAlerts, 5 * 60 * 1000);
+// Chrome freezes timers in hidden tabs mid-compute — resume when we're visible again
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) return;
+  const pr = document.getElementById('progress').textContent;
+  if (/Computing population exposure/.test(pr)) computeAllExposures();
+  if (!coneGroup.getLayers().length) loadCones();
+});
+</script>
+</body>
+</html>

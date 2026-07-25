@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- HealthCast favicon: heartbeat pulse + broadcast arcs on dark navy -->
+  <rect x="0" y="0" width="64" height="64" rx="14" fill="#0e2a47"/>
+  <!-- broadcast arcs (the "Cast") -->
+  <g fill="none" stroke="#4da3ff" stroke-width="4" stroke-linecap="round" opacity="0.9">
+    <path d="M 44 20 A 12 12 0 0 1 52 28"/>
+    <path d="M 40 11 A 22 22 0 0 1 57 28"/>
+  </g>
+  <!-- EKG pulse line (the "Health") -->
+  <polyline points="4,40 18,40 24,26 32,52 38,34 42,40 60,40"
+            fill="none" stroke="#ffc53d" stroke-width="5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
