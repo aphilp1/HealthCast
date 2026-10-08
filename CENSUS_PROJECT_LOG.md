@@ -97,6 +97,24 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
    demographic depth via MCP (age 65+, mobile homes — hazard-vulnerability relevant tables).
 
 ## Session log
+
+- **2026-10-06/07 (resume: "the entire display says API Key Required")** — CAUSE: CARTO's
+  free basemap tiles now return an "API Key Required" image (HTTP 200, ~2 KB stub) for every
+  tile, so the whole map read that phrase. I had reported "no live faults" from a tile-count
+  check (images downloaded, pixels never seen) — wrong; lesson recorded. FIX: basemaps swapped
+  to Esri keyless services — Muted = Canvas Light Gray Base + Reference (state lines/labels),
+  Dark = Canvas Dark Gray Base + Reference, third button now Esri World_Street_Map ("Streets").
+  Legend blend bases re-sampled from the new tiles. ALSO (top-to-bottom code review):
+  auto-refresh no longer clears the selection/panel every 5 min; list no longer flickers to
+  "…" on refresh; expanded groups + selected card survive re-renders; counties repaint only
+  when alert coverage changed; cone count persists in status line; hover-out restores real
+  county style; no-data counties light gray on light basemaps; alert-mode tooltip says
+  "No active alert". Commit 8a05485, pushed; Pages serving new file (arcgisonline present).
+  Backups: HealthCast_2026-10-07_2159.zip (14 MB, excludes MCP repo) + census_pre_review_2026-10-06.html.
+  NOT VERIFIED VISUALLY: my Chrome tab was hidden all session (screenshot timeouts) — no real
+  click pass on new basemaps, county/alert/cone clicks, or legend. Alex to confirm the look.
+  Open: smoke/heat × chronic-disease feature (numbers unverified); RapidWatch cone tie-in;
+  Docker for the 2 MCP search tools; territory pops beyond PR.
 - **2026-07-25 (ask-box parser overhaul, `9b6249f`)** — Alex: "heat warnings and watches"
   wrongly included Severe Thunderstorm Watch + Red Flag Warning; "lets get a lot smarter".
   Root causes: (1) warnings/watches discarded as noise — parser had no LEVEL concept;
