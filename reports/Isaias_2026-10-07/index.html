@@ -14,16 +14,22 @@
     --hw: #c1121f; --ssw: #7b2cbf; --hwa: #f25f7a; --tsw: #1d5fbf; --sswa: #b388eb; --tswa: #f4a300; --tcls: #8b97a6;
   }
   * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 54px; }
   body { margin: 0; font-family: 'Segoe UI', system-ui, sans-serif; color: var(--ink); background: var(--bg); line-height: 1.45; }
   header { background: linear-gradient(135deg, var(--navy), var(--navy2)); color: #fff; padding: 26px 32px 22px; }
   header .kicker { font-size: .78rem; letter-spacing: 1.4px; text-transform: uppercase; color: var(--gold); font-weight: 700; }
   header h1 { margin: 6px 0 4px; font-size: 1.9rem; letter-spacing: .3px; }
   header .sub { color: #c9d4e2; font-size: .95rem; max-width: 980px; }
   header .meta { margin-top: 12px; font-size: .78rem; color: #9fb0c4; display: flex; gap: 22px; flex-wrap: wrap; }
-  main { max-width: 1280px; margin: 0 auto; padding: 10px 32px 60px; }
-  h2 { font-size: 1.22rem; margin: 38px 0 10px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+  nav#toc { position: sticky; top: 0; z-index: 1200; background: #fff; border-bottom: 1px solid var(--line); padding: 0 32px; display: flex; gap: 2px; overflow-x: auto; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  nav#toc a { display: block; padding: 12px 14px; font-size: .82rem; font-weight: 600; color: var(--muted); text-decoration: none; white-space: nowrap; border-bottom: 3px solid transparent; }
+  nav#toc a:hover, nav#toc a.on { color: var(--navy); border-bottom-color: var(--gold); }
+  main { max-width: 1320px; margin: 0 auto; padding: 10px 32px 60px; }
+  section { margin-top: 34px; }
+  h2 { font-size: 1.3rem; margin: 0 0 6px; color: var(--navy); border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+  h2 small { font-weight: 500; color: var(--faint); font-size: .8rem; margin-left: 10px; }
   h3 { font-size: 1rem; margin: 20px 0 6px; color: var(--navy2); }
-  p { max-width: 900px; margin: 6px 0; }
+  p { max-width: 920px; margin: 6px 0; }
   .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin: 16px 0 6px; }
   .tile { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .tile .v { font-size: 1.75rem; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.1; }
@@ -36,34 +42,46 @@
   tr.nat td { color: var(--muted); font-style: italic; }
   tr.tot td { font-weight: 700; background: #fbfcfd; }
   .pill { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: .72rem; color: #fff; font-weight: 600; white-space: nowrap; }
-  .note { font-size: .8rem; color: var(--muted); max-width: 900px; }
-  .warnbox { background: #fff7e6; border: 1px solid #f0d9a6; border-left: 5px solid var(--gold); border-radius: 8px; padding: 10px 14px; margin: 14px 0; font-size: .88rem; max-width: 900px; }
-  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .note { font-size: .8rem; color: var(--muted); max-width: 920px; }
+  .warnbox { background: #fff7e6; border: 1px solid #f0d9a6; border-left: 5px solid var(--gold); border-radius: 8px; padding: 10px 14px; margin: 14px 0; font-size: .88rem; max-width: 920px; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0 4px; align-items: center; }
+  .tabs .grp { font-size: .7rem; text-transform: uppercase; letter-spacing: .5px; color: var(--faint); font-weight: 700; margin: 0 4px 0 8px; }
   .tab { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 5px 13px; font-size: .78rem; cursor: pointer; user-select: none; }
   .tab.on { background: var(--navy); color: #fff; border-color: var(--navy); }
+  /* ---- map ---- */
   .mapwrap { position: relative; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; margin: 12px 0 4px; }
-  #map { height: 720px; background: #e9ecef; }
-  .ctl { position: absolute; z-index: 900; background: rgba(255,255,255,.96); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: .78rem; }
-  #layers { right: 12px; top: 12px; width: 268px; padding: 10px 12px; max-height: 690px; overflow-y: auto; }
-  #layers h4 { margin: 8px 0 4px; font-size: .68rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  #map { height: 780px; background: #e9ecef; }
+  .ctl { position: absolute; z-index: 900; background: rgba(255,255,255,.97); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.15); font-size: .78rem; }
+  #views { left: 12px; top: 12px; padding: 6px; display: flex; gap: 4px; flex-wrap: wrap; max-width: 640px; }
+  #views span { padding: 5px 10px; border-radius: 7px; cursor: pointer; font-weight: 600; user-select: none; }
+  #views span:hover { background: var(--panel); }
+  #views span.storm { background: var(--navy); color: #fff; }
+  #layers { right: 12px; top: 12px; width: 280px; padding: 10px 12px; max-height: calc(100% - 100px); overflow-y: auto; }
+  #layers h4 { margin: 10px 0 4px; font-size: .68rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
   #layers label { display: flex; align-items: center; gap: 6px; padding: 2px 0; cursor: pointer; }
+  #layers label i.sw { width: 18px; height: 4px; display: inline-block; border-radius: 2px; }
+  #modes { display: flex; gap: 4px; margin-bottom: 4px; }
+  #modes span { flex: 1; text-align: center; padding: 6px 4px; border-radius: 7px; background: var(--panel); border: 1px solid var(--line); cursor: pointer; font-weight: 600; font-size: .76rem; user-select: none; }
+  #modes span.on { background: var(--navy); color: #fff; border-color: var(--navy); }
   #layers select { width: 100%; padding: 5px 7px; border: 1px solid var(--line); border-radius: 6px; font-size: .8rem; margin: 2px 0 4px; }
   #legend { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; }
   .lg { display: flex; align-items: center; gap: 8px; }
-  .lg i { width: 20px; height: 11px; border-radius: 2px; border: 1px solid rgba(0,0,0,.2); display: inline-block; }
-  #views { left: 12px; top: 12px; padding: 6px; display: flex; gap: 4px; }
-  #views span { padding: 5px 10px; border-radius: 7px; cursor: pointer; font-weight: 600; }
-  #views span:hover { background: var(--panel); }
-  .leaflet-popup-content { font-size: .8rem; line-height: 1.4; margin: 10px 12px; min-width: 240px; }
-  .leaflet-popup-content b.t { color: var(--navy); font-size: .88rem; }
-  .pr { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dotted var(--line); padding: 1px 0; }
-  .pr span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; }
-  .sect { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-top: 6px; font-weight: 700; }
+  .lg i { width: 20px; height: 11px; border-radius: 2px; border: 1px solid rgba(0,0,0,.2); display: inline-block; flex: 0 0 20px; }
+  #info { left: 12px; bottom: 12px; width: 340px; max-height: 46%; overflow-y: auto; padding: 10px 12px 12px; }
+  #info .ih { font-weight: 700; color: var(--navy); font-size: .9rem; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 8px; }
+  #info .ih span.x { cursor: pointer; color: var(--faint); font-weight: 400; }
+  #info .is { color: var(--muted); font-size: .74rem; }
+  #info .empty { color: var(--muted); }
+  .pr { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px dotted var(--line); padding: 2px 0; }
+  .pr span:last-child { font-variant-numeric: tabular-nums; font-weight: 600; text-align: right; }
+  .sect { font-size: .68rem; text-transform: uppercase; letter-spacing: .5px; color: var(--muted); margin-top: 8px; font-weight: 700; }
   .leaflet-tooltip.tt { font-size: .76rem; padding: 3px 7px; }
+  .leaflet-tooltip.ptl { background: rgba(255,255,255,.92); border: 1px solid #111827; font-size: .72rem; font-weight: 700; padding: 1px 5px; }
+  .leaflet-interactive { cursor: pointer; }
   #loading { position: absolute; inset: 0; z-index: 950; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,.85); font-size: .95rem; color: var(--navy); }
-  ol.src li, ul.lim li { margin: 4px 0; font-size: .86rem; max-width: 900px; }
+  ol.src li, ul.lim li { margin: 4px 0; font-size: .86rem; max-width: 920px; }
   footer { margin-top: 40px; font-size: .76rem; color: var(--faint); border-top: 1px solid var(--line); padding-top: 10px; }
-  @media print { #map { height: 600px; } header { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+  @media print { #map { height: 600px; } nav#toc { display: none; } }
 </style>
 </head>
 <body>
@@ -73,65 +91,87 @@
   <div class="sub" id="h-sub">Loading…</div>
   <div class="meta" id="h-meta"></div>
 </header>
+<nav id="toc">
+  <a href="#summary">Summary</a><a href="#maps">1 · Maps</a><a href="#forecast">2 · Forecast</a><a href="#exposure">3 · People under alerts</a>
+  <a href="#risk">4 · Most at risk</a><a href="#counties">5 · Counties</a><a href="#method">6 · Method &amp; limits</a>
+</nav>
 <main>
-  <div class="tiles" id="tiles"></div>
-  <p class="note" id="tiles-note"></p>
+  <section id="summary">
+    <div class="tiles" id="tiles"></div>
+    <p class="note" id="tiles-note"></p>
+  </section>
 
-  <h2>1. Storm status and forecast</h2>
-  <p id="fc-text"></p>
-  <table id="fc-table"></table>
-  <p class="note">Forecast positions and intensities from the NHC advisory layers at the time of the snapshot. Category uses the Saffir-Simpson scale. Local times are Central Daylight Time as labeled by NHC; the UTC column is day/hour.</p>
-
-  <h2>2. People under each alert</h2>
-  <p>Each block group is assigned the most severe tropical alert covering it, so a person appears once. Where the National Weather Service issued a polygon, the block-group centroid must fall inside it. Zone-based alerts count the whole county. The last row is the national average for comparison.</p>
-  <table id="tier-table"></table>
-  <table id="event-table"></table>
-
-  <h2>3. Who is most at risk</h2>
-  <div id="risk-text"></div>
-  <h3>Census tracts with the largest at-risk counts in the Hurricane Warning and Storm Surge Warning zones</h3>
-  <div class="tabs" id="top-tabs"></div>
-  <table id="top-table"></table>
-  <p class="note">Rates are per tract. Counts for diabetes, COPD and heart disease are CDC PLACES prevalence × adults in the tract. Poverty and no-vehicle rankings require at least 1,500 residents.</p>
-
-  <h2>4. Maps — county, tract, block group and census block</h2>
-  <p>Use the layer panel to switch what the tract fill shows, turn block groups and census blocks on, and overlay the forecast cone, wind swaths and alert polygons. Click any tract, block group or county for its numbers. The view buttons jump between the whole region, the warning zone and a block-level close-up of Mobile Bay and Pensacola.</p>
-  <div class="mapwrap">
-    <div id="map"></div>
-    <div class="ctl" id="views"><span data-v="region">Region</span><span data-v="warn">Warning zone</span><span data-v="mobile">Mobile Bay</span><span data-v="pensacola">Pensacola</span><span data-v="nola">New Orleans</span></div>
-    <div class="ctl" id="layers">
-      <h4>Tract fill</h4>
-      <select id="var-sel"></select>
-      <div id="legend"></div>
-      <h4>Finer geography</h4>
-      <label><input type="checkbox" id="chk-bg"> Block groups (population density)</label>
-      <label><input type="checkbox" id="chk-blk"> Census blocks (dots, warning counties)</label>
-      <h4>Storm</h4>
-      <label><input type="checkbox" id="chk-cone" checked> NHC forecast cone + track</label>
-      <label><input type="checkbox" id="chk-w64" checked> Forecast 64-kt (hurricane) wind swath</label>
-      <label><input type="checkbox" id="chk-w50"> Forecast 50-kt wind swath</label>
-      <label><input type="checkbox" id="chk-w34"> Forecast 34-kt wind swath</label>
-      <label><input type="checkbox" id="chk-arr"> Most likely arrival of TS winds</label>
-      <h4>Alerts</h4>
-      <label><input type="checkbox" id="chk-alerts" checked> NWS alert polygons (by tier)</label>
-      <label><input type="checkbox" id="chk-cty" checked> County outlines</label>
-      <h4>Basemap</h4>
-      <label><input type="radio" name="bm" value="light" checked> Light gray</label>
-      <label><input type="radio" name="bm" value="dark"> Dark gray</label>
+  <section id="maps">
+    <h2>1. Maps <small>county · tract · block group · census block</small></h2>
+    <p><b>Click anything</b>: a tract, a block group, the cone edge, the forecast track, a forecast point, a coastal warning segment, a wind swath edge or an alert polygon edge. Details appear in the panel at the bottom-left. Hover for a quick label. The layer panel on the right has three modes: <b>Exposure</b> (what alert, cone and wind cover), <b>Demographics</b> and <b>Health</b>.</p>
+    <div class="mapwrap">
+      <div id="map"></div>
+      <div class="ctl" id="views"><span data-v="region">Region</span><span data-v="warn">Warning zone</span><span data-v="mobile">Mobile Bay</span><span data-v="pensacola">Pensacola</span><span data-v="nola">New Orleans</span><span class="storm" data-v="storm">Storm summary</span></div>
+      <div class="ctl" id="layers">
+        <div id="modes"><span data-m="exposure" class="on">Exposure</span><span data-m="demo">Demographics</span><span data-m="health">Health</span></div>
+        <select id="var-sel"></select>
+        <div id="legend"></div>
+        <h4>Storm (NHC advisory)</h4>
+        <label><input type="checkbox" id="chk-cone" checked> <i class="sw" style="background:#6d28d9"></i> Forecast cone</label>
+        <label><input type="checkbox" id="chk-track" checked> <i class="sw" style="background:#111827"></i> Forecast track and points</label>
+        <label><input type="checkbox" id="chk-past" checked> <i class="sw" style="background:#64748b"></i> Past track</label>
+        <label><input type="checkbox" id="chk-ww" checked> <i class="sw" style="background:#c1121f"></i> Coastal watch / warning segments</label>
+        <label><input type="checkbox" id="chk-w64" checked> <i class="sw" style="background:#b91c1c"></i> 64-kt (hurricane) wind swath</label>
+        <label><input type="checkbox" id="chk-w50"> <i class="sw" style="background:#ea580c"></i> 50-kt wind swath</label>
+        <label><input type="checkbox" id="chk-w34"> <i class="sw" style="background:#ca8a04"></i> 34-kt wind swath</label>
+        <label><input type="checkbox" id="chk-arr"> <i class="sw" style="background:#0f766e"></i> Most likely arrival of TS winds</label>
+        <h4>NWS alerts</h4>
+        <label><input type="checkbox" id="chk-alerts" checked> Alert polygons (outline by tier)</label>
+        <h4>Geography</h4>
+        <label><input type="checkbox" id="chk-cty" checked> County outlines</label>
+        <label><input type="checkbox" id="chk-bg"> Block groups (population density)</label>
+        <label><input type="checkbox" id="chk-blk"> Census blocks (dots, warning counties)</label>
+        <h4>Basemap</h4>
+        <label><input type="radio" name="bm" value="light" checked> Light gray</label>
+        <label><input type="radio" name="bm" value="dark"> Dark gray</label>
+      </div>
+      <div class="ctl" id="info"><div class="empty">Click a feature on the map for its details.</div></div>
+      <div id="loading">Loading tract, block-group and block geometry…</div>
     </div>
-    <div id="loading">Loading tract, block-group and block geometry…</div>
-  </div>
-  <p class="note" id="map-note"></p>
+    <p class="note" id="map-note"></p>
+  </section>
 
-  <h2>5. Counties</h2>
-  <p>Sorted by alert tier, then by people in that tier. "In tier" is the population inside the county's most severe alert; "any alert" is everyone in the county under at least one tropical alert.</p>
-  <table id="county-table"></table>
+  <section id="forecast">
+    <h2>2. Storm status and forecast</h2>
+    <p id="fc-text"></p>
+    <table id="fc-table"></table>
+    <p class="note">Forecast positions and intensities from the NHC advisory layers at the time of the snapshot. Category uses the Saffir-Simpson scale. Local times are Central Daylight Time as labeled by NHC; the UTC column is day/hour.</p>
+  </section>
 
-  <h2>6. Method, sources and limits</h2>
-  <ol class="src" id="sources"></ol>
-  <h3>Limits</h3>
-  <ul class="lim" id="limits"></ul>
-  <footer id="foot"></footer>
+  <section id="exposure">
+    <h2>3. People under each alert</h2>
+    <p>Each block group is assigned the most severe tropical alert covering it, so a person appears once. Where the National Weather Service issued a polygon, the block-group centroid must fall inside it. Zone-based alerts count the whole county. The last row is the national average for comparison.</p>
+    <table id="tier-table"></table>
+    <table id="event-table"></table>
+  </section>
+
+  <section id="risk">
+    <h2>4. Who is most at risk</h2>
+    <div id="risk-text"></div>
+    <h3>Census tracts with the largest at-risk counts in the Hurricane Warning and Storm Surge Warning zones</h3>
+    <div class="tabs" id="top-tabs"></div>
+    <table id="top-table"></table>
+    <p class="note">Rates are per tract. Counts for diabetes, COPD and heart disease are CDC PLACES prevalence × adults in the tract. Poverty and no-vehicle rankings require at least 1,500 residents. Click a tract name to jump to it on the map.</p>
+  </section>
+
+  <section id="counties">
+    <h2>5. Counties</h2>
+    <p>Sorted by alert tier, then by people in that tier. "In tier" is the population inside the county's most severe alert; "any alert" is everyone in the county under at least one tropical alert.</p>
+    <table id="county-table"></table>
+  </section>
+
+  <section id="method">
+    <h2>6. Method, sources and limits</h2>
+    <ol class="src" id="sources"></ol>
+    <h3>Limits</h3>
+    <ul class="lim" id="limits"></ul>
+    <footer id="foot"></footer>
+  </section>
 </main>
 
 <script>
@@ -140,18 +180,28 @@ const fmt = n => n == null ? '–' : Math.round(n).toLocaleString('en-US');
 const fmtS = n => n == null ? '–' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'K' : fmt(n);
 const pct = (v, d = 1) => v == null ? '–' : v.toFixed(d) + '%';
 const esc = t => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const mph = kt => kt ? Math.round(kt * 1.151) : '';
 const TIER_COLOR = ['var(--hw)', 'var(--ssw)', 'var(--hwa)', 'var(--tsw)', 'var(--sswa)', 'var(--tswa)', 'var(--tcls)'];
 const TIER_HEX = ['#c1121f', '#7b2cbf', '#f25f7a', '#1d5fbf', '#b388eb', '#f4a300', '#8b97a6'];
+const WW_NAME = { HWR: 'Hurricane Warning', HWA: 'Hurricane Watch', TWR: 'Tropical Storm Warning', TWA: 'Tropical Storm Watch' };
+const WW_COLOR = { HWR: '#c1121f', HWA: '#f25f7a', TWR: '#1d5fbf', TWA: '#f4a300' };
 let R, TIER_NAMES;
 
-// ------------------------------------------------------------ load
 const get = u => fetch(u + '?v=' + Date.now()).then(r => { if (!r.ok) throw new Error(u + ' ' + r.status); return r.json(); });
-Promise.all([get('report_data.json')]).then(([r]) => { R = r; TIER_NAMES = r.tier_names; renderText(); initMap(); })
+get('report_data.json').then(r => { R = r; TIER_NAMES = r.tier_names; renderText(); initMap(); })
   .catch(e => { document.getElementById('h-sub').textContent = 'Could not load report data: ' + e.message; });
 
 // ------------------------------------------------------------ text sections
-function pill(t) { return t == null ? '' : `<span class="pill" style="background:${TIER_COLOR[t]}">${esc(R.tier_short[t])}</span>`; }
-function cat(ss) { return ss == null ? '' : ss === 0 ? '' : 'Cat ' + ss; }
+const pill = t => t == null ? '' : `<span class="pill" style="background:${TIER_COLOR[t]}">${esc(R.tier_short[t])}</span>`;
+const cat = ss => ss ? 'Cat ' + ss : '';
+const row = (l, v) => v == null || v === '' ? '' : `<div class="pr"><span>${l}</span><span>${v}</span></div>`;
+function sliceRows(s) {
+  return row('People', fmt(s.people)) + row('Counties · tracts', `${s.counties} · ${fmt(s.tracts)}`) +
+    `<div class="sect">Demographics</div>` + row('Age 65+', `${fmt(s.a65)} (${pct(s.a65_pct)})`) + row('Under 5', fmt(s.u5)) +
+    row('Mobile homes', `${fmt(s.mob)} (${s.mob_per_1000}/1k)`) + row('Below poverty', pct(s.pov_pct)) + row('Households, no vehicle', pct(s.noveh_pct)) +
+    `<div class="sect">Health (adults 18+: ${fmt(s.adults)})</div>` + row('Diabetes', `${fmt(s.diab)} (${pct(s.diab_pct)})`) + row('COPD', `${fmt(s.copd)} (${pct(s.copd_pct)})`) +
+    row('Coronary heart disease', `${fmt(s.chd)} (${pct(s.chd_pct)})`) + row('High blood pressure', `${fmt(s.bp)} (${pct(s.bp_pct)})`);
+}
 function renderText() {
   const m = R.meta, f = R.forecast;
   const peak = f.reduce((a, b) => (b.maxwind || 0) > (a.maxwind || 0) ? b : a, f[0]);
@@ -159,14 +209,13 @@ function renderText() {
   document.getElementById('h-title').textContent = `${m.storm} — Population at risk`;
   document.getElementById('h-sub').innerHTML =
     `NHC advisory ${esc(m.advisory)}, ${esc(m.advdate)}. ${m.storm} is a ${m.type_now === 'HU' ? 'hurricane' : 'tropical storm'} now and is forecast to ` +
-    `reach ${peak.maxwind} kt (${Math.round(peak.maxwind * 1.151)} mph${peak.ssnum ? ', Category ' + peak.ssnum : ''}) ` +
-    (landfall ? `with the center near the Gulf Coast around ${esc(landfall.datelbl || landfall.validtime || '')} (CDT) as a ${landfall.stormtype === 'HU' ? 'Category ' + landfall.ssnum + ' hurricane' : 'tropical storm'}.` : '.') +
+    `reach ${peak.maxwind} kt (${mph(peak.maxwind)} mph${peak.ssnum ? ', Category ' + peak.ssnum : ''}) ` +
+    (landfall ? `with the center near the Gulf Coast around ${esc(landfall.datelbl || '')} (CDT) as a ${landfall.stormtype === 'HU' ? 'Category ' + landfall.ssnum + ' hurricane' : 'tropical storm'}.` : '.') +
     ` This report counts the people under each active NWS alert, inside the forecast cone and inside the forecast hurricane-force wind swath, down to census tract, block group and census block.`;
   document.getElementById('h-meta').innerHTML =
     `<span>NWS alerts snapshot ${esc(m.alerts_snapshot_utc)} (${fmt(m.alerts_total)} active nationwide)</span>` +
     `<span>Built ${esc(m.built_utc)}</span><span>${fmt(m.tract_count)} tracts · ${fmt(m.bg_count)} block groups · ${fmt(m.block_count)} blocks</span>`;
 
-  // headline tiles
   const t = R.tiers, hw = R.hw_only, w = R.warn_tier, any = R.any_alert, c = R.cone, w64 = R.wind['64'];
   document.getElementById('tiles').innerHTML = [
     ['hot', fmtS(hw.people), 'people under a <b>Hurricane Warning</b>'],
@@ -183,16 +232,14 @@ function renderText() {
     `Census blocks in those counties: ${fmt(R.blocks.n)} populated blocks, ${fmt(R.blocks.pop)} residents (2020 count), ` +
     `${fmt(R.blocks.pop_hw)} of them inside a Hurricane Warning polygon${w64 ? ` and ${fmt(R.blocks.pop_w64)} inside the 64-kt swath` : ''}.`;
 
-  // forecast
   document.getElementById('fc-text').innerHTML =
-    `Current position ${f[0].lat.toFixed(1)}°N ${Math.abs(f[0].lon).toFixed(1)}°W, maximum sustained winds ${f[0].maxwind} kt (${Math.round(f[0].maxwind * 1.151)} mph). ` +
+    `Current position ${f[0].lat.toFixed(1)}°N ${Math.abs(f[0].lon).toFixed(1)}°W, maximum sustained winds ${f[0].maxwind} kt (${mph(f[0].maxwind)} mph). ` +
     `Peak forecast intensity ${peak.maxwind} kt around ${esc(peak.datelbl || '')} CDT (${esc(peak.validtime || '')} UTC).`;
   document.getElementById('fc-table').innerHTML =
     `<tr><th>Valid (local)</th><th>Valid (UTC dd/hhmm)</th><th>Hour</th><th>Type</th><th class="n">Max wind kt</th><th class="n">mph</th><th class="n">Gust kt</th><th>Category</th><th class="n">Lat</th><th class="n">Lon</th></tr>` +
-    f.map(p => `<tr><td>${esc(p.datelbl || '')}</td><td>${esc(p.validtime || '')}</td><td>${p.fcsthr ?? p.tau ?? ''}</td><td>${esc(p.stormtype)}</td><td class="n">${p.maxwind ?? ''}</td><td class="n">${p.maxwind ? Math.round(p.maxwind * 1.151) : ''}</td><td class="n">${p.gust ?? ''}</td><td>${cat(p.ssnum)}</td><td class="n">${p.lat}</td><td class="n">${p.lon}</td></tr>`).join('');
+    f.map(p => `<tr><td>${esc(p.datelbl || '')}</td><td>${esc(p.validtime || '')}</td><td>${p.fcsthr ?? p.tau ?? ''}</td><td>${esc(p.stormtype)}</td><td class="n">${p.maxwind ?? ''}</td><td class="n">${mph(p.maxwind)}</td><td class="n">${p.gust ?? ''}</td><td>${cat(p.ssnum)}</td><td class="n">${p.lat}</td><td class="n">${p.lon}</td></tr>`).join('');
 
-  // tiers
-  const row = (label, s, cls = '') =>
+  const trow = (label, s, cls = '') =>
     `<tr class="${cls}"><td>${label}</td><td class="n">${s.counties ?? ''}</td><td class="n">${fmt(s.people)}</td>` +
     `<td class="n">${fmt(s.a65)} <span style="color:var(--faint)">(${pct(s.a65_pct)})</span></td><td class="n">${fmt(s.u5)}</td>` +
     `<td class="n">${fmt(s.mob)} <span style="color:var(--faint)">(${s.mob_per_1000 ?? '–'}/1k)</span></td><td class="n">${pct(s.pov_pct)}</td><td class="n">${pct(s.noveh_pct)}</td>` +
@@ -201,61 +248,50 @@ function renderText() {
   const n = R.national;
   document.getElementById('tier-table').innerHTML =
     `<tr><th>Most severe alert covering the person</th><th class="n">Counties</th><th class="n">People</th><th class="n">Age 65+</th><th class="n">Under 5</th><th class="n">Mobile homes</th><th class="n">Poverty</th><th class="n">No vehicle (hh)</th><th class="n">Diabetes</th><th class="n">COPD</th><th class="n">Heart disease</th><th class="n">High blood pressure</th></tr>` +
-    t.map(s => row(pill(TIER_NAMES.indexOf(s.tier)) + ' ' + esc(s.tier), s)).join('') +
-    row('All tropical alerts, each person once', any, 'tot') +
-    row('Inside NHC forecast cone', R.cone) +
-    (w64 ? row('Inside forecast 64-kt wind swath', w64) : '') +
-    row('Inside cone AND under a warning', R.cone_warn) +
+    t.map(s => trow(pill(TIER_NAMES.indexOf(s.tier)) + ' ' + esc(s.tier), s)).join('') +
+    trow('All tropical alerts, each person once', any, 'tot') + trow('Inside NHC forecast cone', R.cone) +
+    (w64 ? trow('Inside forecast 64-kt wind swath', w64) : '') + trow('Inside cone AND under a warning', R.cone_warn) +
     `<tr class="nat"><td>United States (rates)</td><td></td><td class="n">${fmt(n.people)}</td><td class="n">${pct(n.a65_pct)}</td><td></td><td class="n">${n.mob_per_1000}/1k</td><td class="n">${pct(n.pov_pct)}</td><td class="n">${pct(n.noveh_pct)}</td><td class="n">${pct(n.diab_pct)}</td><td class="n">${pct(n.copd_pct)}</td><td class="n">${pct(n.chd_pct)}</td><td class="n">${pct(n.bp_pct)}</td></tr>`;
   const pe = Object.entries(R.per_event).sort((a, b) => TIER_NAMES.indexOf(a[0]) - TIER_NAMES.indexOf(b[0]));
   document.getElementById('event-table').innerHTML =
     `<tr><th>Alert type (overlaps allowed — a person under two alerts appears in both rows)</th><th class="n">Active alerts</th><th class="n">People</th></tr>` +
     pe.map(([ev, v]) => `<tr><td>${pill(TIER_NAMES.indexOf(ev))} ${esc(ev)}</td><td class="n">${v.alerts}</td><td class="n">${fmt(v.people)}</td></tr>`).join('');
 
-  // risk narrative — written from the numbers, not canned
   const rel = (a, b) => a != null && b ? Math.round(100 * (a / b - 1)) : null;
-  const lines = [];
-  lines.push(`<p>Across the ${w.counties} warning-zone counties, ${fmt(w.people)} people live inside the Hurricane Warning or Storm Surge Warning footprints. Compared with the national population:</p><ul>`);
+  const lines = [`<p>Across the ${w.counties} warning-zone counties, ${fmt(w.people)} people live inside the Hurricane Warning or Storm Surge Warning footprints. Compared with the national population:</p><ul>`];
   const bul = (label, val, natv, unit) => { const d = rel(val, natv); if (d == null) return; lines.push(`<li><b>${label}</b>: ${unit(val)} vs ${unit(natv)} nationally (${d >= 0 ? '+' : ''}${d}%).</li>`); };
   bul('Mobile homes per 1,000 residents', w.mob_per_1000, n.mob_per_1000, v => v);
-  bul('Adults with high blood pressure', w.bp_pct, n.bp_pct, pct);
-  bul('Adults with COPD', w.copd_pct, n.copd_pct, pct);
-  bul('Adults with diabetes', w.diab_pct, n.diab_pct, pct);
-  bul('Adults with coronary heart disease', w.chd_pct, n.chd_pct, pct);
-  bul('Age 65 and over', w.a65_pct, n.a65_pct, pct);
-  bul('Below poverty', w.pov_pct, n.pov_pct, pct);
-  bul('Households with no vehicle', w.noveh_pct, n.noveh_pct, pct);
+  bul('Adults with high blood pressure', w.bp_pct, n.bp_pct, pct); bul('Adults with COPD', w.copd_pct, n.copd_pct, pct);
+  bul('Adults with diabetes', w.diab_pct, n.diab_pct, pct); bul('Adults with coronary heart disease', w.chd_pct, n.chd_pct, pct);
+  bul('Age 65 and over', w.a65_pct, n.a65_pct, pct); bul('Below poverty', w.pov_pct, n.pov_pct, pct); bul('Households with no vehicle', w.noveh_pct, n.noveh_pct, pct);
   lines.push('</ul>');
   const groups = [];
   if (rel(w.mob_per_1000, n.mob_per_1000) > 20) groups.push(`<b>Mobile-home residents</b> — about ${fmt(w.mob)} units in the warning zones. These fail first in hurricane-force wind and surge.`);
   if (rel(w.copd_pct, n.copd_pct) > 10 || rel(w.bp_pct, n.bp_pct) > 10) groups.push(`<b>Adults with chronic disease</b> — roughly ${fmt(w.bp)} with high blood pressure, ${fmt(w.diab)} with diabetes, ${fmt(w.copd)} with COPD and ${fmt(w.chd)} with heart disease. Extended power loss (refrigerated insulin, oxygen concentrators, dialysis access) is the hazard for this group.`);
   if (w.a65 > 0) groups.push(`<b>Older residents</b> — ${fmt(w.a65)} people 65 and over, ${pct(w.a65_pct)} of the zone population.`);
   if (rel(w.noveh_pct, n.noveh_pct) < -10) groups.push(`<b>Vehicle access runs better than the national average</b> (${pct(w.noveh_pct)} of households without a car vs ${pct(n.noveh_pct)}), so the "cannot evacuate" population is smaller than in a large city — but it is concentrated: see the no-vehicle tract ranking below.`);
-  lines.push(`<p>Three groups stand out:</p><ol>${groups.map(g => `<li>${g}</li>`).join('')}</ol>`);
+  lines.push(`<p>Groups that stand out:</p><ol>${groups.map(g => `<li>${g}</li>`).join('')}</ol>`);
   lines.push(`<div class="warnbox">Health figures are CDC PLACES prevalence applied to the resident adult count. They say how many people with each condition live in the zone. They are not a measured multiplier of hurricane harm for those conditions.</div>`);
   document.getElementById('risk-text').innerHTML = lines.join('');
 
-  // top-tract tabs
-  const TABS = [['warn_a65', 'Most residents 65+', 'a65', fmt], ['warn_mob', 'Most mobile homes', 'mob', fmt],
-    ['warn_copdn', 'Most adults with COPD', 'copdn', fmt], ['warn_diabn', 'Most adults with diabetes', 'diabn', fmt],
-    ['warn_povp', 'Highest poverty rate', 'povp', pct], ['warn_novp', 'Highest no-vehicle rate', 'novp', pct],
-    ['warn_dens', 'Densest', 'dens', v => fmt(v) + '/km²'], ['w64_pop', 'Most people in 64-kt swath', 'popW64', fmt], ['cone_pop', 'Most people in cone', 'popCone', fmt]];
+  const TABS = [
+    ['Exposure', 'w64_pop', 'Most people in 64-kt swath', 'popW64', fmt], ['Exposure', 'cone_pop', 'Most people in cone', 'popCone', fmt], ['Exposure', 'warn_dens', 'Densest', 'dens', v => fmt(v) + '/km²'],
+    ['Demographics', 'warn_a65', 'Most residents 65+', 'a65', fmt], ['Demographics', 'warn_mob', 'Most mobile homes', 'mob', fmt], ['Demographics', 'warn_povp', 'Highest poverty rate', 'povp', pct], ['Demographics', 'warn_novp', 'Highest no-vehicle rate', 'novp', pct],
+    ['Health', 'warn_copdn', 'Most adults with COPD', 'copdn', fmt], ['Health', 'warn_diabn', 'Most adults with diabetes', 'diabn', fmt]];
   const tabs = document.getElementById('top-tabs');
-  tabs.innerHTML = TABS.map(([k, l], i) => `<span class="tab ${i ? '' : 'on'}" data-k="${k}">${l}</span>`).join('');
+  let lastGrp = '';
+  tabs.innerHTML = TABS.map(([g, k, l]) => { const h = g !== lastGrp ? `<span class="grp">${g}</span>` : ''; lastGrp = g; return h + `<span class="tab ${k === 'warn_a65' ? 'on' : ''}" data-k="${k}">${l}</span>`; }).join('');
   const showTop = k => {
-    const [, label, key, f] = TABS.find(x => x[0] === k);
+    const [, , label, key, f] = TABS.find(x => x[1] === k);
     document.getElementById('top-table').innerHTML =
       `<tr><th>#</th><th>Tract</th><th>County</th><th>Tier</th><th class="n">Population</th><th class="n">${label.replace('Most ', '').replace('Highest ', '')}</th><th class="n">65+</th><th class="n">Mobile homes</th><th class="n">Poverty</th><th class="n">No vehicle</th><th class="n">COPD adults</th></tr>` +
-      R.top[k].map((r, i) => `<tr><td>${i + 1}</td><td><a href="#" data-tract="${r.g}" style="color:var(--accent)">${esc(r.name)}</a> <span style="color:var(--faint)">${r.g}</span></td><td>${esc(r.coname)}, ${esc(r.st)}</td><td>${pill(r.tier)}</td><td class="n">${fmt(r.pop)}</td><td class="n"><b>${f(r[key])}</b></td><td class="n">${fmt(r.a65)}</td><td class="n">${fmt(r.mob)}</td><td class="n">${pct(r.povp)}</td><td class="n">${pct(r.novp)}</td><td class="n">${fmt(r.copdn)}</td></tr>`).join('');
+      R.top[k].map((r, i) => `<tr><td>${i + 1}</td><td><a href="#maps" data-tract="${r.g}" style="color:var(--accent)">${esc(r.name)}</a> <span style="color:var(--faint)">${r.g}</span></td><td>${esc(r.coname)}, ${esc(r.st)}</td><td>${pill(r.tier)}</td><td class="n">${fmt(r.pop)}</td><td class="n"><b>${f(r[key])}</b></td><td class="n">${fmt(r.a65)}</td><td class="n">${fmt(r.mob)}</td><td class="n">${pct(r.povp)}</td><td class="n">${pct(r.novp)}</td><td class="n">${fmt(r.copdn)}</td></tr>`).join('');
     tabs.querySelectorAll('.tab').forEach(x => x.classList.toggle('on', x.dataset.k === k));
   };
   tabs.addEventListener('click', e => { if (e.target.dataset.k) showTop(e.target.dataset.k); });
   showTop('warn_a65');
-  document.getElementById('top-table').addEventListener('click', e => {
-    const a = e.target.closest('[data-tract]'); if (!a) return; e.preventDefault(); zoomTract(a.dataset.tract);
-  });
+  document.getElementById('top-table').addEventListener('click', e => { const a = e.target.closest('[data-tract]'); if (!a) return; e.preventDefault(); zoomTract(a.dataset.tract); });
 
-  // counties
   document.getElementById('county-table').innerHTML =
     `<tr><th>County</th><th>Tier</th><th class="n">County pop.</th><th class="n">In tier</th><th class="n">Any alert</th><th class="n">In cone</th><th class="n">In 64-kt swath</th><th class="n">65+</th><th class="n">Mobile homes /1k</th><th class="n">Poverty</th><th class="n">No vehicle</th><th class="n">COPD</th><th class="n">Diabetes</th></tr>` +
     R.counties.map(c => `<tr><td>${esc(c.name)}, ${esc(c.st)}</td><td>${pill(c.tier)} ${esc(c.tierName)}</td><td class="n">${fmt(c.pop)}</td><td class="n">${fmt(c.popTier)}</td><td class="n">${fmt(c.popAny)}</td><td class="n">${fmt(c.popCone)}</td><td class="n">${fmt(c.popW64)}</td><td class="n">${pct(c.a65p)}</td><td class="n">${c.mobp ?? '–'}</td><td class="n">${pct(c.povp)}</td><td class="n">${pct(c.novp)}</td><td class="n">${pct(c.copd)}</td><td class="n">${pct(c.diab)}</td></tr>`).join('');
@@ -278,51 +314,86 @@ function renderText() {
     'This is a snapshot of advisory ' + esc(m.advisory) + '. The cone, wind radii and alerts change every advisory.',
   ].map(s => `<li>${s}</li>`).join('');
   document.getElementById('foot').textContent = `HealthCast · U.S. Census Bureau · CDC PLACES · NOAA/NWS/NHC · report built ${m.built_utc}`;
+
+  const links = [...document.querySelectorAll('#toc a')];
+  const obs = new IntersectionObserver(es => { for (const e of es) if (e.isIntersecting) links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); }, { rootMargin: '-40% 0px -55% 0px' });
+  document.querySelectorAll('main section').forEach(s => obs.observe(s));
 }
 
 // ------------------------------------------------------------ map
 const VARS = {
-  tier:  { label: 'Alert tier (most severe)', cat: true },
-  dens:  { label: 'Population density (per km²)', fmt: v => fmt(v), ramp: ['#f1f5f9', '#cfe0f0', '#9fc3e3', '#6aa1d2', '#3f7dbd', '#2358a0', '#133a78'] },
-  pop:   { label: 'Population', fmt: fmt, ramp: ['#f1f5f9', '#cfe0f0', '#9fc3e3', '#6aa1d2', '#3f7dbd', '#2358a0', '#133a78'] },
-  a65p:  { label: '% age 65 and over', fmt: v => pct(v, 0), ramp: ['#f3effa', '#dcd0f0', '#bda9e2', '#9d82d2', '#7d5dbe', '#5d3fa3', '#3d2578'] },
-  mobp:  { label: 'Mobile homes per 1,000 residents', fmt: v => Math.round(v), ramp: ['#fbf3e6', '#f1dcb8', '#e5c187', '#d6a35a', '#c2843a', '#9c6425', '#6f4416'] },
-  povp:  { label: '% below poverty', fmt: v => pct(v, 0), ramp: ['#fcefef', '#f4cfd1', '#eaa6ab', '#dd7a82', '#cc535d', '#ab3540', '#7d1f29'] },
-  novp:  { label: '% households with no vehicle', fmt: v => pct(v, 0), ramp: ['#fbeff6', '#f1cfe3', '#e4a7cb', '#d47db0', '#c05494', '#9c3674', '#6d2251'] },
-  copd:  { label: '% adults with COPD', fmt: v => pct(v, 0), ramp: ['#eef2f6', '#d2dce7', '#aebfd2', '#879fba', '#637fa0', '#476181', '#2e435c'] },
-  diab:  { label: '% adults with diabetes', fmt: v => pct(v, 0), ramp: ['#fbf6e6', '#f1e5b4', '#e5d07f', '#d6b84f', '#bf9b2d', '#937520', '#665014'] },
-  chd:   { label: '% adults with heart disease', fmt: v => pct(v, 0), ramp: ['#fcefef', '#f4cfd1', '#eaa6ab', '#dd7a82', '#cc535d', '#ab3540', '#7d1f29'] },
-  bp:    { label: '% adults with high blood pressure', fmt: v => pct(v, 0), ramp: ['#eef6f3', '#cfe6dc', '#a8d2c1', '#7cbba3', '#54a186', '#378066', '#235a47'] },
-  popCone: { label: 'People inside forecast cone', fmt: fmt, ramp: ['#f3f3f3', '#e0d3ea', '#c9afdc', '#b089cd', '#9663bb', '#7a419f', '#572b74'] },
-  popW64:  { label: 'People inside 64-kt wind swath', fmt: fmt, ramp: ['#f3f3f3', '#f5d5d5', '#eeaaaa', '#e37c7c', '#d44f4f', '#b32a2a', '#801414'] },
-  inc:   { label: 'Median household income', fmt: v => '$' + fmtS(v), ramp: ['#f0f7f3', '#cfe8da', '#a9d7bf', '#7fc3a1', '#55ab83', '#348c67', '#1f6449'] },
+  tier:   { mode: 'exposure', label: 'Most severe alert (tier)', cat: true },
+  popCone:{ mode: 'exposure', label: 'People inside forecast cone', fmt: fmt, ramp: ['#f3f3f3', '#e0d3ea', '#c9afdc', '#b089cd', '#9663bb', '#7a419f', '#572b74'] },
+  popW64: { mode: 'exposure', label: 'People inside 64-kt wind swath', fmt: fmt, ramp: ['#f3f3f3', '#f5d5d5', '#eeaaaa', '#e37c7c', '#d44f4f', '#b32a2a', '#801414'] },
+  dens:   { mode: 'exposure', label: 'Population density (per km²)', fmt: v => fmt(v), ramp: ['#f1f5f9', '#cfe0f0', '#9fc3e3', '#6aa1d2', '#3f7dbd', '#2358a0', '#133a78'] },
+  pop:    { mode: 'exposure', label: 'Population', fmt: fmt, ramp: ['#f1f5f9', '#cfe0f0', '#9fc3e3', '#6aa1d2', '#3f7dbd', '#2358a0', '#133a78'] },
+  a65p:   { mode: 'demo', label: '% age 65 and over', fmt: v => pct(v, 0), ramp: ['#f3effa', '#dcd0f0', '#bda9e2', '#9d82d2', '#7d5dbe', '#5d3fa3', '#3d2578'] },
+  a65:    { mode: 'demo', label: 'Residents 65 and over (count)', fmt: fmt, ramp: ['#f3effa', '#dcd0f0', '#bda9e2', '#9d82d2', '#7d5dbe', '#5d3fa3', '#3d2578'] },
+  mobp:   { mode: 'demo', label: 'Mobile homes per 1,000 residents', fmt: v => Math.round(v), ramp: ['#fbf3e6', '#f1dcb8', '#e5c187', '#d6a35a', '#c2843a', '#9c6425', '#6f4416'] },
+  mob:    { mode: 'demo', label: 'Mobile homes (count)', fmt: fmt, ramp: ['#fbf3e6', '#f1dcb8', '#e5c187', '#d6a35a', '#c2843a', '#9c6425', '#6f4416'] },
+  povp:   { mode: 'demo', label: '% below poverty', fmt: v => pct(v, 0), ramp: ['#fcefef', '#f4cfd1', '#eaa6ab', '#dd7a82', '#cc535d', '#ab3540', '#7d1f29'] },
+  novp:   { mode: 'demo', label: '% households with no vehicle', fmt: v => pct(v, 0), ramp: ['#fbeff6', '#f1cfe3', '#e4a7cb', '#d47db0', '#c05494', '#9c3674', '#6d2251'] },
+  inc:    { mode: 'demo', label: 'Median household income', fmt: v => '$' + fmtS(v), ramp: ['#f0f7f3', '#cfe8da', '#a9d7bf', '#7fc3a1', '#55ab83', '#348c67', '#1f6449'] },
+  copd:   { mode: 'health', label: '% adults with COPD', fmt: v => pct(v, 0), ramp: ['#eef2f6', '#d2dce7', '#aebfd2', '#879fba', '#637fa0', '#476181', '#2e435c'] },
+  copdn:  { mode: 'health', label: 'Adults with COPD (count)', fmt: fmt, ramp: ['#eef2f6', '#d2dce7', '#aebfd2', '#879fba', '#637fa0', '#476181', '#2e435c'] },
+  diab:   { mode: 'health', label: '% adults with diabetes', fmt: v => pct(v, 0), ramp: ['#fbf6e6', '#f1e5b4', '#e5d07f', '#d6b84f', '#bf9b2d', '#937520', '#665014'] },
+  diabn:  { mode: 'health', label: 'Adults with diabetes (count)', fmt: fmt, ramp: ['#fbf6e6', '#f1e5b4', '#e5d07f', '#d6b84f', '#bf9b2d', '#937520', '#665014'] },
+  chd:    { mode: 'health', label: '% adults with heart disease', fmt: v => pct(v, 0), ramp: ['#fcefef', '#f4cfd1', '#eaa6ab', '#dd7a82', '#cc535d', '#ab3540', '#7d1f29'] },
+  bp:     { mode: 'health', label: '% adults with high blood pressure', fmt: v => pct(v, 0), ramp: ['#eef6f3', '#cfe6dc', '#a8d2c1', '#7cbba3', '#54a186', '#378066', '#235a47'] },
 };
-let map, tractsGJ, bgsGJ, blocksD, tractLayer, bgLayer, blockLayer, coneGroup, swathLayers = {}, arrLayer, alertLayer, ctyLayer, base;
-let curVar = 'tier', breaks = [], minVal = null;
+let map, tractsGJ, bgsGJ, blocksD, tractLayer, bgLayer, blockLayer, coneL, trackL, pastL, wwL, swathLayers = {}, arrLayer, alertLayer, ctyLayer, base;
+let curMode = 'exposure', curVar = 'tier', breaks = [], minVal = null, blocksOn = false;
 const tractById = {};
 const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 const BM = { light: ['Canvas/World_Light_Gray_Base', 'Canvas/World_Light_Gray_Reference'], dark: ['Canvas/World_Dark_Gray_Base', 'Canvas/World_Dark_Gray_Reference'] };
+const VIEWS = { region: [[29.3, -89.5], 6], warn: [[30.4, -87.7], 8], mobile: [[30.62, -88.05], 11], pensacola: [[30.45, -87.25], 11], nola: [[29.98, -90.05], 10] };
 function setBase(k) {
   if (base) map.removeLayer(base);
   base = L.layerGroup(BM[k].map((s, i) => L.tileLayer(ESRI + s + '/MapServer/tile/{z}/{y}/{x}', { maxNativeZoom: 16, maxZoom: 19, zIndex: 1 + i, attribution: i ? '' : 'Tiles © Esri' }))).addTo(map);
 }
-const VIEWS = { region: [[29.3, -89.5], 6], warn: [[30.35, -88.3], 8], mobile: [[30.62, -88.05], 11], pensacola: [[30.45, -87.25], 11], nola: [[29.98, -90.05], 10] };
+function showInfo(title, sub, body) {
+  document.getElementById('info').innerHTML = `<div class="ih"><span>${title}</span><span class="x" title="Clear">✕</span></div>` + (sub ? `<div class="is">${sub}</div>` : '') + body;
+}
+document.getElementById('info').addEventListener('click', e => { if (e.target.classList.contains('x')) document.getElementById('info').innerHTML = '<div class="empty">Click a feature on the map for its details.</div>'; });
+function stormSummary() {
+  const m = R.meta, f = R.forecast, peak = f.reduce((a, b) => (b.maxwind || 0) > (a.maxwind || 0) ? b : a, f[0]);
+  showInfo(`${esc(m.storm)} — NHC advisory ${esc(m.advisory)}`, esc(m.advdate),
+    row('Now', `${f[0].stormtype === 'HU' ? 'Hurricane' : 'Tropical storm'} · ${f[0].maxwind} kt (${mph(f[0].maxwind)} mph)`) +
+    row('Position', `${f[0].lat}°N ${Math.abs(f[0].lon)}°W`) + row('Peak forecast', `${peak.maxwind} kt (${mph(peak.maxwind)} mph) ${cat(peak.ssnum)} · ${esc(peak.datelbl)}`) +
+    `<div class="sect">Forecast points</div>` + f.map(p => row(`${esc(p.datelbl)} (${esc(p.validtime)}Z)`, `${esc(p.stormtype)} ${p.maxwind} kt ${cat(p.ssnum)}`)).join('') +
+    `<div class="sect">People</div>` + row('Inside cone', fmt(R.cone.people)) + (R.wind['64'] ? row('Inside 64-kt swath', fmt(R.wind['64'].people)) : '') +
+    row('Under Hurricane Warning', fmt(R.hw_only.people)) + row('Under any tropical alert', fmt(R.any_alert.people)));
+}
 
 function initMap() {
-  map = L.map('map', { preferCanvas: true, minZoom: 4 }).setView(...VIEWS.region);
+  const Q = new URLSearchParams(location.search);
+  if (Q.get('mode') && ['exposure', 'demo', 'health'].includes(Q.get('mode'))) { curMode = Q.get('mode'); document.querySelectorAll('#modes span').forEach(s => s.classList.toggle('on', s.dataset.m === curMode)); }
+  map = L.map('map', { preferCanvas: true, minZoom: 4, zoomControl: false }).setView(...(VIEWS[Q.get('view')] || VIEWS.region));
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
   setBase('light');
   map.createPane('p-tracts').style.zIndex = 350;
   map.createPane('p-bg').style.zIndex = 360;
   map.createPane('p-cty').style.zIndex = 400; map.getPane('p-cty').style.pointerEvents = 'none';
-  map.createPane('p-storm').style.zIndex = 420;
-  map.createPane('p-alerts').style.zIndex = 430;
+  map.createPane('p-fill').style.zIndex = 410; map.getPane('p-fill').style.pointerEvents = 'none';   // translucent fills never block clicks
+  map.createPane('p-alerts').style.zIndex = 425;
+  map.createPane('p-storm').style.zIndex = 430;
   map.createPane('p-blocks').style.zIndex = 440; map.getPane('p-blocks').style.pointerEvents = 'none';
+  map.createPane('p-pts').style.zIndex = 450;
   const sel = document.getElementById('var-sel');
-  sel.innerHTML = Object.entries(VARS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+  const fillSel = () => { sel.innerHTML = Object.entries(VARS).filter(([, v]) => v.mode === curMode).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join(''); curVar = sel.value; };
+  fillSel();
+  if (Q.get('var') && VARS[Q.get('var')] && VARS[Q.get('var')].mode === curMode) { sel.value = Q.get('var'); curVar = sel.value; }
   sel.addEventListener('change', () => { curVar = sel.value; styleTracts(); });
+  document.getElementById('modes').addEventListener('click', e => {
+    if (!e.target.dataset.m) return; curMode = e.target.dataset.m;
+    document.querySelectorAll('#modes span').forEach(s => s.classList.toggle('on', s.dataset.m === curMode));
+    fillSel(); if (tractLayer) styleTracts();
+  });
   document.querySelectorAll('input[name=bm]').forEach(r => r.addEventListener('change', () => setBase(r.value)));
-  document.getElementById('views').addEventListener('click', e => { const v = VIEWS[e.target.dataset.v]; if (v) map.setView(...v); });
+  document.getElementById('views').addEventListener('click', e => { const v = e.target.dataset.v; if (v === 'storm') { stormSummary(); return; } if (VIEWS[v]) map.setView(...VIEWS[v]); });
+  for (const id of ['views', 'layers', 'info']) { const el = document.getElementById(id); L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el); }
   const chk = (id, fn) => document.getElementById(id).addEventListener('change', e => fn(e.target.checked));
+  const toggle = (id, layer) => chk(id, on => on ? layer.addTo(map) : map.removeLayer(layer));
 
   Promise.all([get('tracts.geojson'), get('bgs.geojson'), get('data/nhc_86.geojson'), get('data/nhc_85.geojson'), get('data/nhc_84.geojson'),
                get('data/nhc_87.geojson'), get('data/nhc_90.geojson'), get('wind_swaths.geojson'), get('data/nhc_98.geojson'),
@@ -330,53 +401,90 @@ function initMap() {
   .then(([tr, bg, cone, track, pts, ww, past, sw, arr, al, cty]) => {
     tractsGJ = tr; bgsGJ = bg;
     for (const f of tr.features) tractById[f.properties.g] = f;
-    // tracts
+    const cm = {}; for (const c of R.counties) cm[c.fips] = c;
     tractLayer = L.geoJSON(tr, { pane: 'p-tracts', style: tractStyle, onEachFeature: (f, l) => {
       l.bindTooltip(() => tipTract(f.properties), { sticky: true, className: 'tt' });
-      l.on('click', () => l.bindPopup(popTract(f.properties), { maxWidth: 360 }).openPopup());
+      l.on('click', () => showInfo(`Census tract ${esc(f.properties.name)}`, `${esc(f.properties.coname)}, ${esc(f.properties.st)} · ${f.properties.g}`, popTract(f.properties, cm[f.properties.co])));
     } }).addTo(map);
-    // block groups (off by default)
     bgLayer = L.geoJSON(bg, { pane: 'p-bg', style: bgStyle, onEachFeature: (f, l) => {
       const p = f.properties;
-      l.bindTooltip(() => `<b>Block group ${p.g}</b><br>${fmt(p.pop)} people · ${p.dens != null ? fmt(p.dens) + '/km²' : ''}${p.tier != null ? '<br>' + TIER_NAMES[p.tier] : ''}${p.cone ? '<br>inside cone' : ''}${p.w64 ? '<br>inside 64-kt swath' : ''}`, { sticky: true, className: 'tt' });
+      l.bindTooltip(() => `<b>Block group ${p.g}</b><br>${fmt(p.pop)} people · ${p.dens != null ? fmt(p.dens) + '/km²' : ''}`, { sticky: true, className: 'tt' });
+      l.on('click', () => { const t = tractById[p.g.slice(0, 11)]; showInfo(`Block group ${p.g.slice(-1)}, tract ${t ? esc(t.properties.name) : p.g.slice(5, 11)}`, `${t ? esc(t.properties.coname) + ', ' + esc(t.properties.st) : p.co} · ${p.g}`,
+        row('Population (2020, scaled to 2023)', fmt(p.pop)) + row('Density', p.dens != null ? fmt(p.dens) + '/km²' : null) + row('Most severe alert', p.tier != null ? TIER_NAMES[p.tier] : 'none') + row('Inside forecast cone', p.cone ? 'yes' : 'no') + row('Inside 64-kt swath', p.w64 ? 'yes' : 'no') +
+        (t ? `<div class="sect">Parent tract (ACS / PLACES)</div>` + popTract(t.properties, cm[t.properties.co]) : '')); });
     } });
-    chk('chk-bg', on => on ? bgLayer.addTo(map) : map.removeLayer(bgLayer));
-    // counties outline
+    toggle('chk-bg', bgLayer);
     const ctyIds = new Set(R.counties.map(c => c.fips).concat(tr.features.map(f => f.properties.co)));
-    ctyLayer = L.geoJSON({ type: 'FeatureCollection', features: cty.features.filter(f => ctyIds.has(f.properties.GEOID)) },
-      { pane: 'p-cty', style: { color: '#334155', weight: 1.1, fill: false, opacity: .8 } }).addTo(map);
-    chk('chk-cty', on => on ? ctyLayer.addTo(map) : map.removeLayer(ctyLayer));
-    // storm
-    coneGroup = L.layerGroup([
-      L.geoJSON(cone, { pane: 'p-storm', style: { color: '#6d28d9', weight: 2, dashArray: '8 5', fillColor: '#6d28d9', fillOpacity: .06 }, interactive: false }),
-      L.geoJSON(past, { pane: 'p-storm', style: { color: '#475569', weight: 2, dashArray: '2 4' }, interactive: false }),
-      L.geoJSON(track, { pane: 'p-storm', style: { color: '#111827', weight: 2.2 }, interactive: false }),
-      L.geoJSON(ww, { pane: 'p-storm', style: f => ({ color: { HWR: '#c1121f', HWA: '#f25f7a', TWR: '#1d5fbf', TWA: '#f4a300' }[f.properties.tcww] || '#555', weight: 6, opacity: .9 }) })
-        .bindTooltip(l => ({ HWR: 'Hurricane Warning', HWA: 'Hurricane Watch', TWR: 'Tropical Storm Warning', TWA: 'Tropical Storm Watch' }[l.feature.properties.tcww] || l.feature.properties.tcww) + ' (coastline)', { sticky: true, className: 'tt' }),
-      L.geoJSON(pts, { pane: 'p-storm', pointToLayer: (f, ll) => L.circleMarker(ll, { radius: 6, color: '#111827', weight: 1.5, fillColor: f.properties.stormtype === 'HU' ? '#c1121f' : f.properties.stormtype === 'TS' ? '#1d5fbf' : '#94a3b8', fillOpacity: .95 })
-        .bindTooltip(`<b>${esc(f.properties.datelbl || f.properties.validtime || '')}</b><br>${esc(f.properties.stormtype)} ${f.properties.maxwind} kt${f.properties.ssnum ? ' · Cat ' + f.properties.ssnum : ''}`, { className: 'tt' }) })
-    ]).addTo(map);
-    chk('chk-cone', on => on ? coneGroup.addTo(map) : map.removeLayer(coneGroup));
+    ctyLayer = L.geoJSON({ type: 'FeatureCollection', features: cty.features.filter(f => ctyIds.has(f.properties.GEOID)) }, { pane: 'p-cty', style: { color: '#334155', weight: 1.1, fill: false, opacity: .8 } }).addTo(map);
+    toggle('chk-cty', ctyLayer);
+    // ---- storm: fills in a click-through pane, clickable outlines and lines on top
+    const coneFill = L.geoJSON(cone, { pane: 'p-fill', style: { stroke: false, fillColor: '#6d28d9', fillOpacity: .07 }, interactive: false });
+    const coneEdge = L.geoJSON(cone, { pane: 'p-storm', style: { color: '#6d28d9', weight: 3, dashArray: '9 6', fill: false } })
+      .bindTooltip('NHC forecast cone — click for details', { sticky: true, className: 'tt' })
+      .on('click', () => showInfo('NHC forecast cone', `${esc(R.meta.storm)} · advisory ${esc(R.meta.advisory)} · ${esc(R.meta.advdate)}`,
+        `<p class="is" style="margin:4px 0 6px">Area where the storm center is likely to track for the next ${R.meta.fcstprd} hours (about two thirds of historical track errors). Not the impact area.</p>` + sliceRows(R.cone)));
+    coneL = L.layerGroup([coneFill, coneEdge]).addTo(map); toggle('chk-cone', coneL);
+    const trackCase = L.geoJSON(track, { pane: 'p-storm', style: { color: '#ffffff', weight: 7, opacity: .9 }, interactive: false });
+    const trackLine = L.geoJSON(track, { pane: 'p-storm', style: { color: '#111827', weight: 3.5 } })
+      .bindTooltip('NHC forecast track — click for the forecast', { sticky: true, className: 'tt' }).on('click', stormSummary);
+    const ptsL = L.geoJSON(pts, { pane: 'p-pts', pointToLayer: (f, ll) => {
+      const p = f.properties, hu = p.stormtype === 'HU';
+      return L.circleMarker(ll, { pane: 'p-pts', radius: hu ? 8 : 6.5, color: '#111827', weight: 2, fillColor: hu ? '#c1121f' : p.stormtype === 'TS' ? '#1d5fbf' : '#94a3b8', fillOpacity: 1 })
+        .bindTooltip(`${esc(p.datelbl || '')} · ${esc(p.stormtype)} ${p.maxwind} kt${p.ssnum ? ' · Cat ' + p.ssnum : ''}`, { permanent: true, direction: 'right', offset: [8, 0], className: 'ptl' })
+        .on('click', () => showInfo(`Forecast point — ${esc(p.datelbl)}`, `${esc(p.validtime)} UTC · forecast hour ${p.tau ?? ''}`,
+          row('Type', esc(p.tcdvlp || p.stormtype)) + row('Max sustained wind', `${p.maxwind} kt (${mph(p.maxwind)} mph)`) + row('Gusts', `${p.gust} kt (${mph(p.gust)} mph)`) +
+          row('Pressure', p.mslp ? p.mslp + ' mb' : null) + row('Saffir-Simpson', p.ssnum ? 'Category ' + p.ssnum : 'below hurricane') + row('Position', `${p.lat}°N ${Math.abs(p.lon)}°W`)));
+    } });
+    trackL = L.layerGroup([trackCase, trackLine, ptsL]).addTo(map); toggle('chk-track', trackL);
+    pastL = L.geoJSON(past, { pane: 'p-storm', style: { color: '#64748b', weight: 2.5, dashArray: '3 5' } })
+      .bindTooltip('Past track (where the storm has been)', { sticky: true, className: 'tt' })
+      .on('click', () => showInfo('Past track', 'NHC best-track positions before this advisory', row('Segments', past.features.length) + row('Storm type now', esc(R.meta.type_now)))).addTo(map);
+    toggle('chk-past', pastL);
+    wwL = L.geoJSON(ww, { pane: 'p-storm', style: f => ({ color: WW_COLOR[f.properties.tcww] || '#555', weight: 7, opacity: .95 }), onEachFeature: (f, l) => {
+      const k = f.properties.tcww;
+      l.bindTooltip((WW_NAME[k] || k) + ' — coastline segment', { sticky: true, className: 'tt' });
+      l.on('click', () => showInfo((WW_NAME[k] || k) + ' (coastal segment)', `NHC advisory ${esc(R.meta.advisory)}`,
+        `<p class="is" style="margin:4px 0 6px">Stretch of coast NHC placed under this watch or warning in the advisory. Inland extent comes from the NWS alert polygons.</p>` +
+        (R.per_event[WW_NAME[k]] ? row('People under ' + WW_NAME[k], fmt(R.per_event[WW_NAME[k]].people)) + row('Active NWS alerts of this type', R.per_event[WW_NAME[k]].alerts) : '')));
+    } }).addTo(map);
+    toggle('chk-ww', wwL);
     for (const f of sw.features) {
       const kt = f.properties.kt, col = { 64: '#b91c1c', 50: '#ea580c', 34: '#ca8a04' }[kt];
-      swathLayers[kt] = L.geoJSON(f, { pane: 'p-storm', style: { color: col, weight: 1.5, fillColor: col, fillOpacity: .13 }, interactive: false });
+      const fill = L.geoJSON(f, { pane: 'p-fill', style: { stroke: false, fillColor: col, fillOpacity: .14 }, interactive: false });
+      const edge = L.geoJSON(f, { pane: 'p-storm', style: { color: col, weight: 2.5, fill: false } })
+        .bindTooltip(`${kt}-kt wind swath — click for people inside`, { sticky: true, className: 'tt' })
+        .on('click', () => showInfo(`${kt}-kt (${mph(kt)} mph) forecast wind swath`, 'swept between NHC 12-hourly forecast wind radii', sliceRows(R.wind[String(kt)])));
+      swathLayers[kt] = L.layerGroup([fill, edge]);
       if (kt === 64) swathLayers[kt].addTo(map);
-      chk('chk-w' + kt, on => on ? swathLayers[kt].addTo(map) : map.removeLayer(swathLayers[kt]));
+      toggle('chk-w' + kt, swathLayers[kt]);
     }
-    arrLayer = L.geoJSON(arr, { pane: 'p-storm', style: { color: '#0f766e', weight: 1, fillColor: '#0f766e', fillOpacity: .05 } })
-      .bindTooltip(l => 'Most likely arrival of TS-force winds: ' + esc(l.feature.properties.arrival_time || l.feature.properties.name), { sticky: true, className: 'tt' });
-    chk('chk-arr', on => on ? arrLayer.addTo(map) : map.removeLayer(arrLayer));
-    // alert polygons
+    arrLayer = L.geoJSON(arr, { pane: 'p-storm', style: { color: '#0f766e', weight: 1.4, fill: false }, onEachFeature: (f, l) => {
+      const t = f.properties.arrival_time || f.properties.name;
+      l.bindTooltip('Most likely arrival of tropical-storm-force winds: ' + esc(t), { sticky: true, className: 'tt' });
+      l.on('click', () => showInfo('Arrival of tropical-storm-force winds', 'NHC "most likely" arrival contour', row('Arrival', esc(t))));
+    } });
+    toggle('chk-arr', arrLayer);
     const trop = al.features.filter(a => a.geometry && TIER_NAMES.includes(a.properties.event));
-    alertLayer = L.geoJSON({ type: 'FeatureCollection', features: trop }, { pane: 'p-alerts', style: f => { const c = TIER_HEX[TIER_NAMES.indexOf(f.properties.event)]; return { color: c, weight: 1.6, fillColor: c, fillOpacity: .07 }; },
-      onEachFeature: (f, l) => l.bindTooltip(`<b>${esc(f.properties.event)}</b><br>${esc((f.properties.areaDesc || '').slice(0, 120))}`, { sticky: true, className: 'tt' }) }).addTo(map);
-    chk('chk-alerts', on => on ? alertLayer.addTo(map) : map.removeLayer(alertLayer));
+    alertLayer = L.geoJSON({ type: 'FeatureCollection', features: trop }, { pane: 'p-alerts', style: f => ({ color: TIER_HEX[TIER_NAMES.indexOf(f.properties.event)], weight: 2.2, fill: false, opacity: .9 }),
+      onEachFeature: (f, l) => {
+        const p = f.properties;
+        l.bindTooltip(`<b>${esc(p.event)}</b> — click for the alert`, { sticky: true, className: 'tt' });
+        l.on('click', () => showInfo(esc(p.event), `${esc(p.severity)} · ${esc(p.senderName || '')}`,
+          row('Area', esc(p.areaDesc)) + row('From', esc(fmtWhen(p.onset))) + row('Until', esc(fmtWhen(p.ends || p.expires))) +
+          (p.headline ? `<div class="sect">Headline</div><div style="font-size:.78rem">${esc(p.headline)}</div>` : '') +
+          (p.description ? `<div class="sect">Alert text</div><div style="font-size:.76rem;white-space:pre-wrap;max-height:220px;overflow-y:auto">${esc(p.description.trim())}</div>` : '') +
+          (p.instruction ? `<div class="sect">What to do</div><div style="font-size:.76rem;white-space:pre-wrap">${esc(p.instruction.trim())}</div>` : '') +
+          (R.per_event[p.event] ? `<div class="sect">All ${esc(p.event)}s in this snapshot</div>` + row('People', fmt(R.per_event[p.event].people)) : '')));
+      } }).addTo(map);
+    toggle('chk-alerts', alertLayer);
     styleTracts();
     document.getElementById('loading').style.display = 'none';
+    if (Q.get('bg') === '1') { document.getElementById('chk-bg').checked = true; bgLayer.addTo(map); }
+    if (Q.get('blocks') === '1') setTimeout(() => { const c = document.getElementById('chk-blk'); c.checked = true; c.dispatchEvent(new Event('change')); }, 50);
     document.getElementById('map-note').textContent =
-      `${fmt(tr.features.length)} tracts, ${fmt(bg.features.length)} block groups and ${fmt(R.blocks.n)} populated census blocks are drawn from Census TIGERweb boundaries and 2020 block counts. Tract fills use quantile breaks over the tracts shown.`;
-    // blocks: lazy-load on first toggle
+      `${fmt(tr.features.length)} tracts, ${fmt(bg.features.length)} block groups and ${fmt(R.blocks.n)} populated census blocks are drawn from Census TIGERweb boundaries and 2020 block counts. Tract fills use quantile breaks over the tracts shown. Census-block dots are display only; click the block group or tract around them.`;
     chk('chk-blk', on => {
+      blocksOn = on; tractLayer.setStyle(tractStyle);
       if (!on) { if (blockLayer) map.removeLayer(blockLayer); return; }
       if (blockLayer) { blockLayer.addTo(map); return; }
       document.getElementById('loading').style.display = 'flex'; document.getElementById('loading').textContent = 'Loading census blocks…';
@@ -384,26 +492,21 @@ function initMap() {
     });
   }).catch(e => { document.getElementById('loading').textContent = 'Map data failed: ' + e.message; });
 }
+function fmtWhen(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 
-// --- tract styling + legend
-function tractVal(p) { return p[curVar]; }
 function computeBreaks() {
-  const vals = tractsGJ.features.map(f => tractVal(f.properties)).filter(v => v != null && !(curVar.startsWith('pop') && v === 0)).sort((a, b) => a - b);
+  const vals = tractsGJ.features.map(f => f.properties[curVar]).filter(v => v != null && !(curVar.startsWith('pop') && v === 0)).sort((a, b) => a - b);
   minVal = vals.length ? vals[0] : null;
   breaks = []; for (let i = 1; i < 7; i++) breaks.push(vals[Math.floor(vals.length * i / 7)]);
 }
-function rampColor(v) {
-  const r = VARS[curVar].ramp; if (v == null) return null;
-  for (let i = breaks.length - 1; i >= 0; i--) if (v >= breaks[i]) return r[i + 1];
-  return r[0];
-}
+function rampColor(v) { const r = VARS[curVar].ramp; if (v == null) return null; for (let i = breaks.length - 1; i >= 0; i--) if (v >= breaks[i]) return r[i + 1]; return r[0]; }
 function tractStyle(f) {
   const p = f.properties;
-  if (curVar === 'tier') return p.tier == null ? { color: '#94a3b8', weight: .4, fillColor: '#cbd5e1', fillOpacity: .12 }
-    : { color: '#64748b', weight: .4, fillColor: TIER_HEX[p.tier], fillOpacity: .35 + .4 * (p.tierFrac || 0) };
-  const v = tractVal(p); const c = rampColor(v);
-  if (curVar.startsWith('pop') && !v) return { color: '#94a3b8', weight: .3, fillColor: '#e2e8f0', fillOpacity: .1 };
-  return c ? { color: '#64748b', weight: .4, fillColor: c, fillOpacity: .72 } : { color: '#94a3b8', weight: .3, fillColor: '#e2e8f0', fillOpacity: .15 };
+  const k = blocksOn ? .25 : 1;   // block dots carry the detail; fade the tract fill under them
+  if (curVar === 'tier') return p.tier == null ? { color: '#94a3b8', weight: .4, fillColor: '#cbd5e1', fillOpacity: .12 * k } : { color: '#64748b', weight: .4, fillColor: TIER_HEX[p.tier], fillOpacity: (.35 + .4 * (p.tierFrac || 0)) * k };
+  const v = p[curVar], c = rampColor(v);
+  if (curVar.startsWith('pop') && !v) return { color: '#94a3b8', weight: .3, fillColor: '#e2e8f0', fillOpacity: .1 * k };
+  return c ? { color: '#64748b', weight: .4, fillColor: c, fillOpacity: .72 * k } : { color: '#94a3b8', weight: .3, fillColor: '#e2e8f0', fillOpacity: .15 * k };
 }
 function bgStyle(f) {
   const d = f.properties.dens || 0;
@@ -425,25 +528,22 @@ function styleTracts() {
 }
 function tipTract(p) {
   const v = VARS[curVar];
-  return `<b>${esc(p.name)}</b> · ${esc(p.coname)}<br>${fmt(p.pop)} people${p.tier != null ? ' · ' + TIER_NAMES[p.tier] : ''}` +
-    (curVar !== 'tier' && p[curVar] != null ? `<br>${v.label}: ${v.fmt(p[curVar])}` : '');
+  return `<b>${esc(p.name)}</b> · ${esc(p.coname)}<br>${fmt(p.pop)} people${p.tier != null ? ' · ' + TIER_NAMES[p.tier] : ''}` + (curVar !== 'tier' && p[curVar] != null ? `<br>${v.label}: ${v.fmt(p[curVar])}` : '');
 }
-function popTract(p) {
-  const r = (l, v) => v == null ? '' : `<div class="pr"><span>${l}</span><span>${v}</span></div>`;
-  return `<b class="t">Census tract ${esc(p.name)}</b><br><span style="color:var(--muted)">${esc(p.coname)}, ${esc(p.st)} · ${p.g}</span>` +
-    `<div class="sect">Alert exposure</div>` + r('Most severe alert', p.tier != null ? TIER_NAMES[p.tier] + ` (${Math.round(100 * p.tierFrac)}% of residents)` : 'none') +
-    r('Inside forecast cone', p.cone ? Math.round(100 * p.cone) + '% · ' + fmt(p.popCone) + ' people' : 'no') + r('Inside 64-kt swath', p.w64 ? Math.round(100 * p.w64) + '% · ' + fmt(p.popW64) + ' people' : 'no') +
-    `<div class="sect">People</div>` + r('Population (ACS 2023)', fmt(p.pop)) + r('Density', p.dens != null ? fmt(p.dens) + '/km²' : null) + r('Age 65+', p.a65 ? fmt(p.a65) + ' (' + pct(p.a65p) + ')' : null) + r('Under 5', fmt(p.u5)) +
-    `<div class="sect">Housing & means</div>` + r('Mobile homes', p.mob != null ? fmt(p.mob) + ' (' + p.mobp + '/1k)' : null) + r('Below poverty', pct(p.povp)) + r('Households, no vehicle', pct(p.novp)) + r('Median household income', p.inc ? '$' + fmt(p.inc) : null) +
-    `<div class="sect">Chronic disease (adults 18+: ${fmt(p.adults)})</div>` + r('Diabetes', p.diab != null ? pct(p.diab) + ' · ' + fmt(p.diabn) : null) + r('COPD', p.copd != null ? pct(p.copd) + ' · ' + fmt(p.copdn) : null) + r('Coronary heart disease', p.chd != null ? pct(p.chd) + ' · ' + fmt(p.chdn) : null) + r('High blood pressure', p.bp != null ? pct(p.bp) + ' · ' + fmt(p.bpn) : null);
+function popTract(p, c) {
+  return `<div class="sect">Alert exposure</div>` + row('Most severe alert', p.tier != null ? TIER_NAMES[p.tier] + ` (${Math.round(100 * p.tierFrac)}% of residents)` : 'none') +
+    row('Inside forecast cone', p.cone ? Math.round(100 * p.cone) + '% · ' + fmt(p.popCone) + ' people' : 'no') + row('Inside 64-kt swath', p.w64 ? Math.round(100 * p.w64) + '% · ' + fmt(p.popW64) + ' people' : 'no') +
+    `<div class="sect">Demographics</div>` + row('Population (ACS 2023)', fmt(p.pop)) + row('Density', p.dens != null ? fmt(p.dens) + '/km²' : null) + row('Age 65+', p.a65 ? fmt(p.a65) + ' (' + pct(p.a65p) + ')' : null) + row('Under 5', fmt(p.u5)) +
+    row('Mobile homes', p.mob != null ? fmt(p.mob) + ' (' + p.mobp + '/1k)' : null) + row('Below poverty', pct(p.povp)) + row('Households, no vehicle', pct(p.novp)) + row('Median household income', p.inc ? '$' + fmt(p.inc) : null) +
+    `<div class="sect">Health (adults 18+: ${fmt(p.adults)})</div>` + row('Diabetes', p.diab != null ? pct(p.diab) + ' · ' + fmt(p.diabn) : null) + row('COPD', p.copd != null ? pct(p.copd) + ' · ' + fmt(p.copdn) : null) + row('Coronary heart disease', p.chd != null ? pct(p.chd) + ' · ' + fmt(p.chdn) : null) + row('High blood pressure', p.bp != null ? pct(p.bp) + ' · ' + fmt(p.bpn) : null) +
+    (c ? `<div class="sect">County: ${esc(c.name)}</div>` + row('Most severe alert', esc(c.tierName)) + row('County population', fmt(c.pop)) + row('Under any tropical alert', fmt(c.popAny)) + row('Inside cone', fmt(c.popCone)) + row('Inside 64-kt swath', fmt(c.popW64)) : '');
 }
 function zoomTract(g) {
   const f = tractById[g]; if (!f) return;
-  const l = L.geoJSON(f); map.fitBounds(l.getBounds(), { maxZoom: 13, padding: [40, 40] });
-  tractLayer.eachLayer(x => { if (x.feature.properties.g === g) x.bindPopup(popTract(x.feature.properties), { maxWidth: 360 }).openPopup(); });
-  document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  map.fitBounds(L.geoJSON(f).getBounds(), { maxZoom: 13, padding: [40, 40] });
+  const cm = {}; for (const c of R.counties) cm[c.fips] = c;
+  showInfo(`Census tract ${esc(f.properties.name)}`, `${esc(f.properties.coname)}, ${esc(f.properties.st)} · ${g}`, popTract(f.properties, cm[f.properties.co]));
 }
-// --- census blocks: one canvas, redrawn on move (tens of thousands of points)
 function blockCanvas(rows) {
   const Layer = L.Layer.extend({
     onAdd(m) { this._m = m; this._c = L.DomUtil.create('canvas', 'leaflet-layer'); this._c.style.position = 'absolute'; m.getPane('p-blocks').appendChild(this._c); m.on('moveend zoomend resize', this._draw, this); this._draw(); },
@@ -453,12 +553,10 @@ function blockCanvas(rows) {
       L.DomUtil.setPosition(this._c, tl); this._c.width = size.x; this._c.height = size.y;
       const ctx = this._c.getContext('2d'), b = m.getBounds(), z = m.getZoom();
       if (z < 8) { ctx.font = '12px Segoe UI'; ctx.fillStyle = '#334155'; ctx.fillText('Zoom in to see census blocks', 12, 20); return; }
-      const w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth();
-      const scale = z >= 13 ? 1 : z >= 11 ? .7 : .45;
+      const w = b.getWest(), e = b.getEast(), s = b.getSouth(), n = b.getNorth(), scale = z >= 13 ? 1 : z >= 11 ? .7 : .45;
       for (const r of rows) {
         if (r[0] < s || r[0] > n || r[1] < w || r[1] > e) continue;
-        const pt = m.latLngToContainerPoint([r[0], r[1]]);
-        const rad = Math.max(1.2, Math.min(9, Math.sqrt(r[2]) * .45)) * scale;
+        const pt = m.latLngToContainerPoint([r[0], r[1]]), rad = Math.max(1.2, Math.min(9, Math.sqrt(r[2]) * .45)) * scale;
         ctx.beginPath(); ctx.arc(pt.x, pt.y, rad, 0, 6.283);
         ctx.fillStyle = r[3] >= 0 ? TIER_HEX[r[3]] + 'bb' : '#64748b99'; ctx.fill();
         if (r[5]) { ctx.lineWidth = 1; ctx.strokeStyle = '#111'; ctx.stroke(); }

@@ -98,6 +98,18 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
 
 ## Session log
 
+- **2026-10-07 23:50 — Isaias report v2 (Alex's review)** — Alex: "turn it into sections; move the map; legend hidden
+  behind zoom buttons; click the map/track for info; sort demography vs health; not getting storm track." Rebuilt
+  index.html: sticky section menu, map moved to section 1 under the tiles, zoom control bottom-right, layer panel with
+  Exposure / Demographics / Health modes, EVERYTHING clickable (cone edge, track, forecast points w/ permanent labels,
+  past track, coastal W/W segments, swath edges, alert polygon outlines, tracts, block groups) → fixed info panel
+  bottom-left. Fills live in a click-through pane so tract clicks work inside cone/swath/alerts. URL params:
+  ?view=region|warn|mobile|pensacola|nola&mode=exposure|demo|health&var=<key>&bg=1&blocks=1.
+  ★ VIEWING METHOD when my Chrome tab is hidden: headless Chrome screenshot —
+  "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --screenshot=<png> --window-size=1500,1900
+  --virtual-time-budget=20000 --user-data-dir=<temp> <url>  → Read the PNG. Three views SEEN this way (region, warning
+  zone/COPD, Mobile Bay blocks). Click handlers verified by firing them in the page. Not pushed.
+
 - **2026-10-07 late — ISAIAS ALERT REPORT (first HealthCast report product)** —
   `reports/Isaias_2026-10-07/index.html` (serve: http://localhost:8020/reports/Isaias_2026-10-07/index.html).
   Snapshot: NHC advisory 6 (10 PM CDT Oct 7, TS now, forecast Cat 2 landfall near AL/FL coast ~7 PM CDT Fri Oct 9),
