@@ -98,6 +98,15 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
 
 ## Session log
 
+- **2026-10-08 00:05 — Isaias report: CLICKS ACTUALLY FIXED** — Alex: "still can't click the map and get data; the one
+  thing I asked you to do." Cause = the July county-click bug again: preferCanvas gives every upper pane a full-map
+  canvas that swallows clicks for layers beneath (tracts). My earlier "verified" was layer.fire('click') = bypasses
+  hit-testing = worthless. Fix: SVG renderers for every layer above the tracts (bg/alerts/storm/pts), tracts stay
+  canvas. PROOF: index.html?selftest=1 dispatches real pointer/mouse events at map coordinates and records the top
+  element + info panel; run under headless Chrome --dump-dom: Mobile click → CANVAS → "Census Tract 27, Mobile County";
+  Pensacola → Tract 14.02; landfall point → "path leaflet-interactive → Forecast point 7:00 PM Fri". RULE: a click
+  test must go through elementFromPoint + dispatchEvent (or a real mouse), never fire().
+
 - **2026-10-07 23:50 — Isaias report v2 (Alex's review)** — Alex: "turn it into sections; move the map; legend hidden
   behind zoom buttons; click the map/track for info; sort demography vs health; not getting storm track." Rebuilt
   index.html: sticky section menu, map moved to section 1 under the tiles, zoom control bottom-right, layer panel with

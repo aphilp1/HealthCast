@@ -379,6 +379,10 @@ function initMap() {
   map.createPane('p-storm').style.zIndex = 430;
   map.createPane('p-blocks').style.zIndex = 440; map.getPane('p-blocks').style.pointerEvents = 'none';
   map.createPane('p-pts').style.zIndex = 450;
+  // Tracts stay on canvas (3,402 polygons). Everything above them is SVG: a canvas renderer
+  // is a full-map element that swallows clicks meant for the layers below it; SVG only
+  // captures clicks on the shapes themselves.
+  window.RS = { bg: L.svg({ pane: 'p-bg' }), alerts: L.svg({ pane: 'p-alerts' }), storm: L.svg({ pane: 'p-storm' }), pts: L.svg({ pane: 'p-pts' }) };
   const sel = document.getElementById('var-sel');
   const fillSel = () => { sel.innerHTML = Object.entries(VARS).filter(([, v]) => v.mode === curMode).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join(''); curVar = sel.value; };
   fillSel();
@@ -406,7 +410,7 @@ function initMap() {
       l.bindTooltip(() => tipTract(f.properties), { sticky: true, className: 'tt' });
       l.on('click', () => showInfo(`Census tract ${esc(f.properties.name)}`, `${esc(f.properties.coname)}, ${esc(f.properties.st)} · ${f.properties.g}`, popTract(f.properties, cm[f.properties.co])));
     } }).addTo(map);
-    bgLayer = L.geoJSON(bg, { pane: 'p-bg', style: bgStyle, onEachFeature: (f, l) => {
+    bgLayer = L.geoJSON(bg, { pane: 'p-bg', renderer: RS.bg, style: bgStyle, onEachFeature: (f, l) => {
       const p = f.properties;
       l.bindTooltip(() => `<b>Block group ${p.g}</b><br>${fmt(p.pop)} people · ${p.dens != null ? fmt(p.dens) + '/km²' : ''}`, { sticky: true, className: 'tt' });
       l.on('click', () => { const t = tractById[p.g.slice(0, 11)]; showInfo(`Block group ${p.g.slice(-1)}, tract ${t ? esc(t.properties.name) : p.g.slice(5, 11)}`, `${t ? esc(t.properties.coname) + ', ' + esc(t.properties.st) : p.co} · ${p.g}`,
@@ -419,28 +423,28 @@ function initMap() {
     toggle('chk-cty', ctyLayer);
     // ---- storm: fills in a click-through pane, clickable outlines and lines on top
     const coneFill = L.geoJSON(cone, { pane: 'p-fill', style: { stroke: false, fillColor: '#6d28d9', fillOpacity: .07 }, interactive: false });
-    const coneEdge = L.geoJSON(cone, { pane: 'p-storm', style: { color: '#6d28d9', weight: 3, dashArray: '9 6', fill: false } })
+    const coneEdge = L.geoJSON(cone, { pane: 'p-storm', renderer: RS.storm, style: { color: '#6d28d9', weight: 3, dashArray: '9 6', fill: false } })
       .bindTooltip('NHC forecast cone — click for details', { sticky: true, className: 'tt' })
       .on('click', () => showInfo('NHC forecast cone', `${esc(R.meta.storm)} · advisory ${esc(R.meta.advisory)} · ${esc(R.meta.advdate)}`,
         `<p class="is" style="margin:4px 0 6px">Area where the storm center is likely to track for the next ${R.meta.fcstprd} hours (about two thirds of historical track errors). Not the impact area.</p>` + sliceRows(R.cone)));
     coneL = L.layerGroup([coneFill, coneEdge]).addTo(map); toggle('chk-cone', coneL);
-    const trackCase = L.geoJSON(track, { pane: 'p-storm', style: { color: '#ffffff', weight: 7, opacity: .9 }, interactive: false });
-    const trackLine = L.geoJSON(track, { pane: 'p-storm', style: { color: '#111827', weight: 3.5 } })
+    const trackCase = L.geoJSON(track, { pane: 'p-storm', renderer: RS.storm, style: { color: '#ffffff', weight: 7, opacity: .9 }, interactive: false });
+    const trackLine = L.geoJSON(track, { pane: 'p-storm', renderer: RS.storm, style: { color: '#111827', weight: 3.5 } })
       .bindTooltip('NHC forecast track — click for the forecast', { sticky: true, className: 'tt' }).on('click', stormSummary);
     const ptsL = L.geoJSON(pts, { pane: 'p-pts', pointToLayer: (f, ll) => {
       const p = f.properties, hu = p.stormtype === 'HU';
-      return L.circleMarker(ll, { pane: 'p-pts', radius: hu ? 8 : 6.5, color: '#111827', weight: 2, fillColor: hu ? '#c1121f' : p.stormtype === 'TS' ? '#1d5fbf' : '#94a3b8', fillOpacity: 1 })
+      return L.circleMarker(ll, { pane: 'p-pts', renderer: RS.pts, radius: hu ? 8 : 6.5, color: '#111827', weight: 2, fillColor: hu ? '#c1121f' : p.stormtype === 'TS' ? '#1d5fbf' : '#94a3b8', fillOpacity: 1 })
         .bindTooltip(`${esc(p.datelbl || '')} · ${esc(p.stormtype)} ${p.maxwind} kt${p.ssnum ? ' · Cat ' + p.ssnum : ''}`, { permanent: true, direction: 'right', offset: [8, 0], className: 'ptl' })
         .on('click', () => showInfo(`Forecast point — ${esc(p.datelbl)}`, `${esc(p.validtime)} UTC · forecast hour ${p.tau ?? ''}`,
           row('Type', esc(p.tcdvlp || p.stormtype)) + row('Max sustained wind', `${p.maxwind} kt (${mph(p.maxwind)} mph)`) + row('Gusts', `${p.gust} kt (${mph(p.gust)} mph)`) +
           row('Pressure', p.mslp ? p.mslp + ' mb' : null) + row('Saffir-Simpson', p.ssnum ? 'Category ' + p.ssnum : 'below hurricane') + row('Position', `${p.lat}°N ${Math.abs(p.lon)}°W`)));
     } });
     trackL = L.layerGroup([trackCase, trackLine, ptsL]).addTo(map); toggle('chk-track', trackL);
-    pastL = L.geoJSON(past, { pane: 'p-storm', style: { color: '#64748b', weight: 2.5, dashArray: '3 5' } })
+    pastL = L.geoJSON(past, { pane: 'p-storm', renderer: RS.storm, style: { color: '#64748b', weight: 2.5, dashArray: '3 5' } })
       .bindTooltip('Past track (where the storm has been)', { sticky: true, className: 'tt' })
       .on('click', () => showInfo('Past track', 'NHC best-track positions before this advisory', row('Segments', past.features.length) + row('Storm type now', esc(R.meta.type_now)))).addTo(map);
     toggle('chk-past', pastL);
-    wwL = L.geoJSON(ww, { pane: 'p-storm', style: f => ({ color: WW_COLOR[f.properties.tcww] || '#555', weight: 7, opacity: .95 }), onEachFeature: (f, l) => {
+    wwL = L.geoJSON(ww, { pane: 'p-storm', renderer: RS.storm, style: f => ({ color: WW_COLOR[f.properties.tcww] || '#555', weight: 7, opacity: .95 }), onEachFeature: (f, l) => {
       const k = f.properties.tcww;
       l.bindTooltip((WW_NAME[k] || k) + ' — coastline segment', { sticky: true, className: 'tt' });
       l.on('click', () => showInfo((WW_NAME[k] || k) + ' (coastal segment)', `NHC advisory ${esc(R.meta.advisory)}`,
@@ -451,21 +455,21 @@ function initMap() {
     for (const f of sw.features) {
       const kt = f.properties.kt, col = { 64: '#b91c1c', 50: '#ea580c', 34: '#ca8a04' }[kt];
       const fill = L.geoJSON(f, { pane: 'p-fill', style: { stroke: false, fillColor: col, fillOpacity: .14 }, interactive: false });
-      const edge = L.geoJSON(f, { pane: 'p-storm', style: { color: col, weight: 2.5, fill: false } })
+      const edge = L.geoJSON(f, { pane: 'p-storm', renderer: RS.storm, style: { color: col, weight: 2.5, fill: false } })
         .bindTooltip(`${kt}-kt wind swath — click for people inside`, { sticky: true, className: 'tt' })
         .on('click', () => showInfo(`${kt}-kt (${mph(kt)} mph) forecast wind swath`, 'swept between NHC 12-hourly forecast wind radii', sliceRows(R.wind[String(kt)])));
       swathLayers[kt] = L.layerGroup([fill, edge]);
       if (kt === 64) swathLayers[kt].addTo(map);
       toggle('chk-w' + kt, swathLayers[kt]);
     }
-    arrLayer = L.geoJSON(arr, { pane: 'p-storm', style: { color: '#0f766e', weight: 1.4, fill: false }, onEachFeature: (f, l) => {
+    arrLayer = L.geoJSON(arr, { pane: 'p-storm', renderer: RS.storm, style: { color: '#0f766e', weight: 1.4, fill: false }, onEachFeature: (f, l) => {
       const t = f.properties.arrival_time || f.properties.name;
       l.bindTooltip('Most likely arrival of tropical-storm-force winds: ' + esc(t), { sticky: true, className: 'tt' });
       l.on('click', () => showInfo('Arrival of tropical-storm-force winds', 'NHC "most likely" arrival contour', row('Arrival', esc(t))));
     } });
     toggle('chk-arr', arrLayer);
     const trop = al.features.filter(a => a.geometry && TIER_NAMES.includes(a.properties.event));
-    alertLayer = L.geoJSON({ type: 'FeatureCollection', features: trop }, { pane: 'p-alerts', style: f => ({ color: TIER_HEX[TIER_NAMES.indexOf(f.properties.event)], weight: 2.2, fill: false, opacity: .9 }),
+    alertLayer = L.geoJSON({ type: 'FeatureCollection', features: trop }, { pane: 'p-alerts', renderer: RS.alerts, style: f => ({ color: TIER_HEX[TIER_NAMES.indexOf(f.properties.event)], weight: 2.2, fill: false, opacity: .9 }),
       onEachFeature: (f, l) => {
         const p = f.properties;
         l.bindTooltip(`<b>${esc(p.event)}</b> — click for the alert`, { sticky: true, className: 'tt' });
@@ -481,6 +485,7 @@ function initMap() {
     document.getElementById('loading').style.display = 'none';
     if (Q.get('bg') === '1') { document.getElementById('chk-bg').checked = true; bgLayer.addTo(map); }
     if (Q.get('blocks') === '1') setTimeout(() => { const c = document.getElementById('chk-blk'); c.checked = true; c.dispatchEvent(new Event('change')); }, 50);
+    if (Q.get('selftest') === '1') setTimeout(selfTest, 1500);
     document.getElementById('map-note').textContent =
       `${fmt(tr.features.length)} tracts, ${fmt(bg.features.length)} block groups and ${fmt(R.blocks.n)} populated census blocks are drawn from Census TIGERweb boundaries and 2020 block counts. Tract fills use quantile breaks over the tracts shown. Census-block dots are display only; click the block group or tract around them.`;
     chk('chk-blk', on => {
@@ -491,6 +496,24 @@ function initMap() {
       get('blocks.json').then(b => { blocksD = b; blockLayer = blockCanvas(b.rows).addTo(map); document.getElementById('loading').style.display = 'none'; if (map.getZoom() < 9) map.setView(...VIEWS.mobile); });
     });
   }).catch(e => { document.getElementById('loading').textContent = 'Map data failed: ' + e.message; });
+}
+// ?selftest=1 — dispatch real mouse events at map coordinates (goes through browser hit-testing,
+// unlike calling the handlers) and write what the info panel shows into #selftest for headless checks.
+function selfTest() {
+  const rect = document.getElementById('map').getBoundingClientRect();
+  const info = () => document.getElementById('info').innerText.replace(/\s+/g, ' ').slice(0, 90);
+  const clickAt = ll => {
+    const cp = map.latLngToContainerPoint(ll), x = rect.left + cp.x, y = rect.top + cp.y;
+    const el = document.elementFromPoint(x, y); if (!el) return 'NO ELEMENT';
+    const o = { clientX: x, clientY: y, bubbles: true, cancelable: true, button: 0 };
+    for (const t of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) el.dispatchEvent(new (t.startsWith('pointer') ? PointerEvent : MouseEvent)(t, o));
+    return (el.tagName + ' ' + (el.getAttribute('class') || '')).trim().slice(0, 30) + ' → ' + info();
+  };
+  const pt = R.forecast.find(p => p.tau === 48) || R.forecast[0];
+  const tests = { tractMobile: [30.69, -88.10], tractPensacola: [30.47, -87.25], forecastPoint: [pt.lat, pt.lon], openGulf: [27.5, -88.5] };
+  const out = {};
+  for (const [k, ll] of Object.entries(tests)) { document.getElementById('info').innerHTML = ''; out[k] = clickAt(ll); }
+  const d = document.createElement('pre'); d.id = 'selftest'; d.textContent = JSON.stringify(out, null, 1); document.body.appendChild(d);
 }
 function fmtWhen(iso) { if (!iso) return ''; const d = new Date(iso); return d.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }); }
 
