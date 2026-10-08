@@ -270,19 +270,30 @@ const fmt = n => n.toLocaleString('en-US');
 const fmtShort = n => n >= 1e6 ? (n / 1e6).toFixed(1) + 'M' : n >= 1e3 ? Math.round(n / 1e3) + 'K' : String(Math.round(n));
 
 const map = L.map('map', { preferCanvas: true, minZoom: 3 }).setView([39.5, -96.5], 5);
+// Basemaps: Esri's keyless tile services. (CARTO's free tiles started returning an
+// "API Key Required" image in place of every tile — 2026-10-06.) Esri's gray canvases
+// come as two tiles: a Base (land/water fill) and a Reference (state/country
+// boundaries + place labels); both are needed to match what a single CARTO tile drew.
+const ESRI = 'https://server.arcgisonline.com/ArcGIS/rest/services/';
 const BASEMAPS = {
-  muted: { label: 'Muted', url: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png' },
-  light: { label: 'Light', url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png' },
-  dark:  { label: 'Dark',  url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png' },
+  muted: { label: 'Muted', urls: [ESRI + 'Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+                                   ESRI + 'Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}'], maxNative: 16 },
+  light: { label: 'Streets', urls: [ESRI + 'World_Street_Map/MapServer/tile/{z}/{y}/{x}'], maxNative: 19 },
+  dark:  { label: 'Dark',  urls: [ESRI + 'Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+                                   ESRI + 'Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}'], maxNative: 16 },
 };
 let baseKey = 'muted', baseLayer = null;
+// Colors that depend on the basemap under the counties
+const edgeColor = () => baseKey === 'dark' ? '#0b0e12' : '#6b7787';
+const nullFill  = () => baseKey === 'dark' ? '#1a2026' : '#c9d1da';   // "no data" county
+const LEGEND_BASE = { muted: [238, 238, 238], light: [234, 233, 207], dark: [63, 63, 65] };
 function setBasemap(key) {
   baseKey = key;
   if (baseLayer) map.removeLayer(baseLayer);
-  baseLayer = L.tileLayer(BASEMAPS[key].url, {
-    attribution: '&copy; OpenStreetMap &copy; CARTO', subdomains: 'abcd', maxZoom: 19
-  }).addTo(baseLayer ? map : map);
-  baseLayer.setZIndex(1);
+  const b = BASEMAPS[key];
+  baseLayer = L.layerGroup(b.urls.map((u, i) => L.tileLayer(u, {
+    attribution: i === 0 ? 'Tiles &copy; Esri' : '', maxZoom: 19, maxNativeZoom: b.maxNative, zIndex: 1 + i
+  }))).addTo(map);
   document.querySelectorAll('.bm').forEach(b => b.classList.toggle('on', b.dataset.bm === key));
   try { if (countyLayer) restyleCounties(); } catch (e) { /* countyLayer not declared yet on first call */ }
 }
@@ -361,7 +372,7 @@ function computeBreaks() {
 }
 function modeColor(v) {
   const ramp = MODES[mode].ramp;
-  if (v == null) return '#1a2026';
+  if (v == null) return nullFill();
   for (let i = breaks.length - 1; i >= 0; i--) if (v >= breaks[i]) return ramp[i + 1];
   return ramp[0];
 }
@@ -369,14 +380,14 @@ function restyleCounties() {
   if (mode === 'alerts') {
     countyLayer.setStyle(f => {
       const r = coverageWorst[f.properties.GEOID];
-      const edge = baseKey === 'dark' ? '#0b0e12' : '#6b7787';
+      const edge = edgeColor();
       return r === undefined
         ? { fillColor: '#94a3b3', fillOpacity: 0.06, color: edge, weight: 0.4 }
         : { fillColor: SEV_FILL[r], fillOpacity: 0.62, color: edge, weight: 0.4 };
     });
   } else {
     computeBreaks();
-    const edge = baseKey === 'dark' ? '#0b0e12' : '#6b7787';
+    const edge = edgeColor();
     countyLayer.setStyle(f => ({
       fillColor: modeColor(MODES[mode].val(f.properties, acs[f.properties.GEOID], health[f.properties.GEOID])),
       fillOpacity: 0.66, color: edge, weight: 0.4
@@ -413,10 +424,11 @@ Promise.all([
       countyFeat[p.GEOID] = f;
       countyBounds[p.GEOID] = lyr.getBounds ? lyr.getBounds() : null;
       lyr.on('mouseover', () => lyr.setStyle({ weight: 1.6, color: '#4da3ff' }));
-      lyr.on('mouseout', () => lyr.setStyle({ weight: 0.4, color: '#0b0e12' }));
+      lyr.on('mouseout', () => countyLayer.resetStyle(lyr));
       lyr.bindTooltip(() => {
         const a = acs[p.GEOID], m = MODES[mode], v = m.val(p, a, health[p.GEOID]);
-        return `<b>${countyName(p.GEOID, p)}</b><br>${m.label}: ${v != null ? m.fmt(v) : 'n/a'}`;
+        const txt = v != null ? m.fmt(v) : (mode === 'alerts' ? 'No active alert' : 'n/a');
+        return `<b>${countyName(p.GEOID, p)}</b><br>${m.label}: ${txt}`;
       }, { sticky: true, className: 'county-tip' });
       lyr.on('click', () => showCountyPanel(p.GEOID));
     }
@@ -596,16 +608,16 @@ layerOpen.addEventListener('click', () => {
 
 // Legend chips are blended exactly like the map draws them (ramp color at the
 // county fill opacity over the dark basemap) so legend and map truly match.
-function blendToMap(hex) {
-  const base = [16, 20, 26];   // dark basemap under 0.7-opacity county fill
+function blendToMap(hex, alpha = 0.65) {
+  const base = LEGEND_BASE[baseKey] || LEGEND_BASE.muted;   // basemap color under the county fill
   const c = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
-  return 'rgb(' + c.map((v, i) => Math.round(v * 0.7 + base[i] * 0.3)).join(',') + ')';
+  return 'rgb(' + c.map((v, i) => Math.round(v * alpha + base[i] * (1 - alpha))).join(',') + ')';
 }
 function updateLegend() {
   if (mode === 'alerts') {
     const rows = Object.keys(SEV_NAME).map(r =>
       `<div class="lg-row"><i style="background:${blendToMap(SEV_FILL[r])}"></i><span>${SEV_NAME[r]} alert</span></div>`);
-    rows.push(`<div class="lg-row"><i style="background:#1f252e"></i><span>No active alert</span></div>`);
+    rows.push(`<div class="lg-row"><i style="background:${blendToMap('#94a3b3', 0.06)}"></i><span>No active alert</span></div>`);
     document.getElementById('legend-body').innerHTML = rows.join('');
     return;
   }
@@ -661,10 +673,12 @@ let alerts = [], alertLayerGroup = L.layerGroup().addTo(map);
 let filterMode = 'all', searchText = '';
 const cssId = s => s.replace(/[^a-zA-Z0-9]/g, '_');
 
+let coverageSig = '';   // detects whether the county alert map actually changed
 function loadAlerts() {
   const pr = document.getElementById('progress');
   pr.textContent = 'Loading live NWS alerts…';
-  clearSelection();
+  // The selection and open panel stay put across refreshes (auto or manual) —
+  // closing the user's panel every 5 minutes was the worst thing the app did
   fetch('https://api.weather.gov/alerts/active?status=actual')
     .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(j => {
@@ -674,10 +688,13 @@ function loadAlerts() {
       sortAlerts();
       buildGroups();
       buildQueryPlan();     // free-text tokens are validated against the fresh alert set
-      renderAlertList();
+      // First load: show the list right away with "…" badges. Refreshes: keep the
+      // old list on screen until the new totals exist (no flicker to "…").
+      if (!document.getElementById('alert-list').childElementCount) renderAlertList();
       drawAlertPolys();
       computeCoverage();
-      restyleCounties();
+      const sig = JSON.stringify(coverageWorst);
+      if (sig !== coverageSig) { coverageSig = sig; restyleCounties(); }   // repaint = multi-second freeze; only when needed
       computeAllExposures();
     })
     .catch(e => { pr.textContent = 'NWS alert feed failed: ' + e.message; });
@@ -875,6 +892,11 @@ function finishGroups() {   // after exposure compute: union totals + member ord
 
 function renderAlertList() {
   const el = document.getElementById('alert-list');
+  // remember what the user had open/selected so a re-render doesn't undo it
+  const expanded = new Set([...el.querySelectorAll('.gi-members')]
+    .filter(b => b.style.display === 'block').map(b => b.closest('.alert-item').dataset.group));
+  const selGroup = el.querySelector('.alert-item.sel')?.dataset.group;
+  const selAlert = el.querySelector('.gi-m.sel, .alert-item.sel[data-alert-id]')?.dataset.alertId;
   el.innerHTML = '';
   const matched = [];
   const vis = [];
@@ -901,6 +923,16 @@ function renderAlertList() {
       (g.members.length > 1 ? `<div class="gi-expand" data-exp>▸ individual alerts</div><div class="gi-members" style="display:none"></div>` : '');
     if (g.members.length === 1) d.dataset.alertId = g.members[0].id;
     el.appendChild(d);
+    if (expanded.has(g.event)) {
+      fillMembers(d, g);
+      d.querySelector('.gi-members').style.display = 'block';
+      d.querySelector('.gi-expand').textContent = '▾ individual alerts';
+    }
+    if (selGroup && selGroup === g.event && !selAlert) d.classList.add('sel');
+  }
+  if (selAlert) {
+    const row = document.getElementById('ai-' + cssId(selAlert));
+    if (row) row.classList.add('sel');
   }
   if (!vis.length) el.innerHTML = '<div style="color:var(--muted);padding:12px">No alerts match this filter.</div>';
   updateAnswer(matched);
@@ -1098,6 +1130,12 @@ function sameExposure(a) {
 }
 
 let coveredBG = null, coveredCounties = null, computeToken = 0;
+let progressDone = '', coneCount = 0;
+function showProgressDone() {
+  if (!progressDone) return;
+  document.getElementById('progress').textContent = progressDone +
+    (coneCount ? ' · ' + coneCount + ' active tropical cone' + (coneCount > 1 ? 's' : '') : '');
+}
 function polygonExposure(a, mark) {
   const ab = turf.bbox(a);
   let total = 0; const byCounty = {};
@@ -1155,7 +1193,8 @@ function computeAllExposures() {
     if (i < alerts.length) setTimeout(chunk, 0);
     else {
       sortAlerts(); finishGroups(); renderAlertList();
-      pr.textContent = alerts.length + ' alerts in ' + groups.length + ' types, ranked by population · updated ' + new Date().toLocaleTimeString();
+      progressDone = alerts.length + ' alerts in ' + groups.length + ' types, ranked by population · updated ' + new Date().toLocaleTimeString();
+      showProgressDone();
     }
   }
   chunk();
@@ -1395,10 +1434,8 @@ function loadCones() {
             .addTo(coneGroup);
         }
       }
-      if (n) {
-        const pr = document.getElementById('progress');
-        pr.textContent += ' · ' + n + ' active tropical cone' + (n > 1 ? 's' : '');
-      }
+      coneCount = n;
+      showProgressDone();
     });
 }
 setTimeout(loadCones, 4000);
