@@ -98,6 +98,10 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
 
 ## Session log
 
+- **2026-10-08 00:10 — Isaias report PUSHED (Alex: "push")** — 039ab84 on origin/master; public at
+  https://aphilp1.github.io/HealthCast/reports/Isaias_2026-10-07/index.html . Live page: all data files 200 (tracts 7.5 MB),
+  headless ?selftest=1 hit-test passed on the public URL (Mobile → Tract 27, Pensacola → Tract 14.02, landfall point).
+
 - **2026-10-08 00:05 — Isaias report: CLICKS ACTUALLY FIXED** — Alex: "still can't click the map and get data; the one
   thing I asked you to do." Cause = the July county-click bug again: preferCanvas gives every upper pane a full-map
   canvas that swallows clicks for layers beneath (tracts). My earlier "verified" was layer.fire('click') = bypasses
