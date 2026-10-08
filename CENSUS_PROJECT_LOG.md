@@ -98,6 +98,24 @@ Single-file `census.html` (StormWatch style: Leaflet, dark high-contrast UI, no 
 
 ## Session log
 
+- **2026-10-07 late — ISAIAS ALERT REPORT (first HealthCast report product)** —
+  `reports/Isaias_2026-10-07/index.html` (serve: http://localhost:8020/reports/Isaias_2026-10-07/index.html).
+  Snapshot: NHC advisory 6 (10 PM CDT Oct 7, TS now, forecast Cat 2 landfall near AL/FL coast ~7 PM CDT Fri Oct 9),
+  NWS alerts 2026-10-08T04:22:59Z (398). NUMBERS (block-group union, each person once): Hurricane Warning 1,765,616 ·
+  HW+Storm Surge Warning 2,063,823 (18 co, 556 tracts) · any tropical alert 3,625,498 · inside cone 9,086,744 (139 co) ·
+  inside swept 64-kt swath 509,919 (8 co). Most at risk vs US: mobile homes 34/1k vs 24, high BP 40.1% vs 32.5%,
+  COPD 7.9 vs 6.1, diabetes 13.6 vs 11.4; no-vehicle BELOW national (4.9 vs 8.2).
+  SUB-COUNTY: 3,402 tracts (TIGERweb Generalized_ACS2023 layer 4, ACS 2023 tract vars + CDC PLACES tract prevalence),
+  2,749 block groups (layer 6) in 46 alert counties, 51,899 populated 2020 blocks (tigerWMS_Census2020 layer 10,
+  POP100 points) in 19 warning counties. Per-BG tier = most severe alert whose POLYGON contains the centroid
+  (zone alerts = whole county). Pipeline: fetch_geo.py → fetch_acs_tracts.py → build_report.py (shapely, pip-installed).
+  GOTCHAS: TIGERweb Tracts_Blocks layers 1/3 are label layers (OBJECTID/BASENAME only, no geometry) — use 4 (tracts)
+  and 6 (block groups); named outFields on 1/3 → "Failed to execute query". NHC inundation layer 100 is not
+  queryable (raster). NHC wind radii are 12-hourly — raw 64-kt union missed landfall entirely (0 people); report sweeps
+  consecutive radii (convex hull) and SAYS SO in limits. NHC datelbl is local CDT, not UTC.
+  Verified via in-page JS only (tab hidden all session): tiles, 13 tier rows, 47 county rows, 3,402 tracts drawn,
+  blocks + BG toggles load, legends sane, console clean. NOT seen visually. Not pushed (ask Alex).
+
 - **2026-10-06/07 (resume: "the entire display says API Key Required")** — CAUSE: CARTO's
   free basemap tiles now return an "API Key Required" image (HTTP 200, ~2 KB stub) for every
   tile, so the whole map read that phrase. I had reported "no live faults" from a tile-count
